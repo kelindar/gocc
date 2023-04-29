@@ -169,11 +169,17 @@ func (t *TranslateUnit) Translate() error {
 	if err != nil {
 		return err
 	}
-	dump, _ := runCommand("objdump", "-d", t.Object, "--insn-width", "16")
+
+	dump, err := runCommand("objdump", "-d", t.Object, "--insn-width", "16")
+	if err != nil {
+		return err
+	}
+
 	err = parseObjectDump(dump, assembly)
 	if err != nil {
 		return err
 	}
+
 	for i, name := range functions {
 		functions[i].Lines = assembly[name.Name]
 	}

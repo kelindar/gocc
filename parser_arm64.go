@@ -28,9 +28,10 @@ import (
 const buildTags = "//go:build !noasm && arm64\n"
 
 var (
+	commentLine   = regexp.MustCompile(`^\s*;.*$`)
 	attributeLine = regexp.MustCompile(`^\s+\..+$`)
 	nameLine      = regexp.MustCompile(`^\w+:.+$`)
-	labelLine     = regexp.MustCompile(`^\.\w+_\d+:.*$`)
+	labelLine     = regexp.MustCompile(`^[A-Z0-9]+_\d+:.*$`)
 	codeLine      = regexp.MustCompile(`^\s+\w+.+$`)
 	symbolLine    = regexp.MustCompile(`^\w+\s+<\w+>:$`)
 	dataLine      = regexp.MustCompile(`^\w+:\s+\w+\s+.+$`)
@@ -77,12 +78,12 @@ func parseAssembly(path string) (map[string][]Line, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if attributeLine.Match([]byte(line)) {
+		switch {
+		case attributeLine.MatchString(line):
 			continue
-		} else if nameLine.Match([]byte(line)) {
-			functionName = strings.Split(line, ":")[0]
-			functions[functionName] = make([]Line, 0)
-		} else if labelLine.Match([]byte(line)) {
+		case commentLine.MatchString(line):
+			continue
+		case labelLine.MatchString(line):
 			labelName = strings.Split(line, ":")[0]
 			labelName = labelName[1:]
 			lines := functions[functionName]
@@ -91,8 +92,19 @@ func parseAssembly(path string) (map[string][]Line, error) {
 			} else {
 				lines[len(lines)-1].Labels = append(lines[len(lines)-1].Labels, labelName)
 			}
-		} else if codeLine.Match([]byte(line)) {
-			asm := strings.Split(line, "#")[0]
+
+			println("label: " + line)
+			println("function: " + functionName)
+			println("label name: " + labelName)
+			for _, l := range lines {
+				println(l.String())
+			}
+
+		case nameLine.MatchString(line):
+			functionName = strings.Split(line, ":")[0]
+			functions[functionName] = make([]Line, 0)
+		case codeLine.MatchString(line):
+			asm := strings.Split(line, ";")[0]
 			asm = strings.TrimSpace(asm)
 			if labelName == "" {
 				functions[functionName] = append(functions[functionName], Line{Assembly: asm})
@@ -101,6 +113,9 @@ func parseAssembly(path string) (map[string][]Line, error) {
 				lines[len(lines)-1].Assembly = asm
 				labelName = ""
 			}
+
+		default:
+			println("unexpected line: " + line)
 		}
 	}
 
