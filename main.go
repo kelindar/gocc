@@ -21,13 +21,13 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/kelindar/gocc/internal/config"
 	"github.com/spf13/cobra"
 )
 
 // listIncludePaths lists include paths used by clang.
 func listIncludePaths() ([]string, error) {
 	out, err := runCommand("bash", "-c", "echo | gcc -xc -E -v -")
-	// out, err := runCommand("bash", "-c", "echo | arm-none-eabi-gcc -mfloat-abi=hard -mfpu=neon -xc -E -v -")
 	if err != nil {
 		return nil, err
 	}
@@ -78,9 +78,18 @@ var command = &cobra.Command{
 		for _, m := range machineOptions {
 			options = append(options, "-m"+m)
 		}
+
+		// Load the architecture
+		target, _ := cmd.PersistentFlags().GetString("arch")
+		arch, err := config.For(target)
+		if err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+
 		optimizeLevel, _ := cmd.PersistentFlags().GetInt("optimize-level")
 		options = append(options, fmt.Sprintf("-O%d", optimizeLevel))
-		file := NewTranslateUnit(args[0], output, options...)
+		file := NewTranslateUnit(arch, args[0], output, options...)
 		if err := file.Translate(); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -92,6 +101,7 @@ func init() {
 	command.PersistentFlags().StringP("output", "o", "", "output directory of generated files")
 	command.PersistentFlags().StringSliceP("machine-option", "m", nil, "machine option for clang")
 	command.PersistentFlags().IntP("optimize-level", "O", 0, "optimization level for clang")
+	command.PersistentFlags().StringP("arch", "a", "amd64", "target architecture to use")
 }
 
 func main() {

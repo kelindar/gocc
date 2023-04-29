@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package asm
+package config
 
 import (
 	"testing"
@@ -20,30 +20,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLineWord(t *testing.T) {
-	line := Line{
-		Assembly: "vaddps 0x40(%rdx,%rax,4),%ymm3,%ymm3",
-		Binary:   []string{"c5", "e4", "58", "5c", "82", "40"},
-	}
-
-	assert.Equal(t, "\tLONG $0x5c58e4c5; WORD $0x4082\t// vaddps 0x40(%rdx,%rax,4),%ymm3,%ymm3\n", line.String())
+func TestARM64(t *testing.T) {
+	cfg, err := For("arm64")
+	assert.NoError(t, err)
+	assert.Contains(t, cfg.BuildTags, "arm64")
 }
 
-func TestLineByte(t *testing.T) {
-	line := Line{
-		Assembly: "ret",
-		Binary:   []string{"c3"},
-	}
-
-	assert.Equal(t, "\tBYTE $0xc3\t// ret\n", line.String())
-}
-
-func TestLineLabel(t *testing.T) {
-	line := Line{
-		Labels:   []string{"label"},
-		Assembly: "ret",
-		Binary:   []string{"c3"},
-	}
-
-	assert.Equal(t, "label:\n\tBYTE $0xc3\t// ret\n", line.String())
+func TestAMD64(t *testing.T) {
+	cfg, err := For("amd64")
+	assert.NoError(t, err)
+	assert.Contains(t, cfg.BuildTags, "amd64")
 }

@@ -12,34 +12,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package main
+
+package asm
 
 import (
 	"bufio"
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 	"unicode"
 
-	"github.com/kelindar/gocc/internal/asm"
+	"github.com/kelindar/gocc/internal/config"
 	"github.com/klauspost/asmfmt"
 )
 
-const buildTags = "//go:build !noasm && arm64\n"
-
-var (
-	commentLine   = regexp.MustCompile(`^\s*;.*$`)
-	attributeLine = regexp.MustCompile(`^\s+\..+$`)
-	nameLine      = regexp.MustCompile(`^\w+:.+$`)
-	labelLine     = regexp.MustCompile(`^[A-Z0-9]+_\d+:.*$`)
-	codeLine      = regexp.MustCompile(`^\s+\w+.+$`)
-	symbolLine    = regexp.MustCompile(`^\w+\s+<\w+>:$`)
-	dataLine      = regexp.MustCompile(`^\w+:\s+\w+\s+.+$`)
-	registers     = []string{"R0", "R1", "R2", "R3"}
-)
-
-func parseAssembly(path string) ([]asm.Function, error) {
+// ParseAssembly parses the assembly file and returns a list of functions
+func ParseAssembly(arch *config.Arch, path string) ([]Function, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -52,8 +40,8 @@ func parseAssembly(path string) ([]asm.Function, error) {
 	}(file)
 
 	var (
-		functions    = make([]asm.Function, 0, 8)
-		current      *asm.Function
+		functions    = make([]Function, 0, 8)
+		current      *Function
 		functionName string
 		labelName    string
 	)
@@ -62,26 +50,42 @@ func parseAssembly(path string) ([]asm.Function, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		switch {
-		case attributeLine.MatchString(line):
+
+		// Skip attirubtes and comment lines
+		case arch.Attribute.MatchString(line):
 			continue
-		case commentLine.MatchString(line):
+		case arch.Comment.MatchString(line):
 			continue
-		case labelLine.MatchString(line):
+
+		// Handle assembly labels. We could potentially have multiple labels per line if
+		// compiler decides to generate no-op instructions.
+		case arch.Label.MatchString(line):
 			labelName = strings.Split(line, ":")[0]
 			labelName = labelName[1:]
-			current.Lines = append(current.Lines, asm.Line{Label: labelName})
-		case nameLine.MatchString(line):
+			switch {
+			case len(current.Lines) == 0:
+				current.Lines = append(current.Lines, Line{Labels: []string{labelName}})
+			case current.Lines[len(current.Lines)-1].Assembly == "": // Previous line was a label
+				current.Lines[len(current.Lines)-1].Labels = append(current.Lines[len(current.Lines)-1].Labels, labelName)
+			default:
+				current.Lines = append(current.Lines, Line{Labels: []string{labelName}})
+			}
+
+		// Handle assembly function name
+		case arch.Function.MatchString(line):
 			functionName = strings.Split(line, ":")[0]
-			functions = append(functions, asm.Function{
+			functions = append(functions, Function{
 				Name:  functionName,
-				Lines: make([]asm.Line, 0),
+				Lines: make([]Line, 0),
 			})
 			current = &functions[len(functions)-1]
-		case codeLine.MatchString(line):
-			code := strings.Split(line, ";")[0]
+
+		// Handle assembly instructions
+		case arch.Code.MatchString(line):
+			code := strings.Split(line, arch.CommentCh)[0]
 			code = strings.TrimSpace(code)
 			if labelName == "" {
-				current.Lines = append(current.Lines, asm.Line{Assembly: code})
+				current.Lines = append(current.Lines, Line{Assembly: code})
 			} else {
 				current.Lines[len(current.Lines)-1].Assembly = code
 				labelName = ""
@@ -95,30 +99,32 @@ func parseAssembly(path string) ([]asm.Function, error) {
 	return functions, nil
 }
 
-func parseObjectDump(dump string, functions []asm.Function) error {
+// ParseObjectDump parses the output of objdump file and returns a list of functions
+func ParseObjectDump(arch *config.Arch, dump string, functions []Function) error {
 	var (
 		functionName string
 		functionIdx  int
-		current      *asm.Function
+		current      *Function
 		lineNumber   int
 	)
 
 	for i, line := range strings.Split(dump, "\n") {
 		line = strings.TrimSpace(line)
 		switch {
-		case symbolLine.MatchString(line):
+		case arch.Symbol.MatchString(line):
 			functionName = strings.Split(line, "<")[1]
 			functionName = strings.Split(functionName, ">")[0]
 			current = &functions[functionIdx]
 			lineNumber = 0
 			functionIdx++
-		case dataLine.MatchString(line):
+		case arch.Data.MatchString(line):
 			data := strings.Split(line, ":")[1]
 			data = strings.TrimSpace(data)
 			splits := strings.Split(data, " ")
-
-			var binary []string
-			var assembly string
+			var (
+				binary   []string
+				assembly string
+			)
 			for i, s := range splits {
 				if s == "" || unicode.IsSpace(rune(s[0])) {
 					assembly = strings.Join(splits[i:], " ")
@@ -128,8 +134,17 @@ func parseObjectDump(dump string, functions []asm.Function) error {
 				binary = append(binary, s)
 			}
 
-			if lineNumber >= len(current.Lines) {
-				return fmt.Errorf("%d: unexpected objectdump line: %s", i, line)
+			switch {
+			case assembly == "":
+				return fmt.Errorf("try to increase --insn-width of objdump")
+			case strings.HasPrefix(assembly, "nop"):
+				continue
+			case assembly == "xchg   %ax,%ax":
+				continue
+			case strings.HasPrefix(assembly, "cs nopw"):
+				continue
+			case lineNumber >= len(current.Lines):
+				return fmt.Errorf("%d: unexpected objectdump line: %s, please compare assembly with objdump output", i, line)
 			}
 
 			current.Lines[lineNumber].Binary = binary
@@ -139,17 +154,16 @@ func parseObjectDump(dump string, functions []asm.Function) error {
 	return nil
 }
 
-func generateGoAssembly(path string, functions []asm.Function) error {
-	// generate code
+// Generate generates the Go PLAN9 assembly file
+func Generate(arch *config.Arch, path string, functions []Function) error {
 	var builder strings.Builder
-	builder.WriteString(buildTags)
+	builder.WriteString(arch.BuildTags)
 	builder.WriteString("// AUTO-GENERATED BY GOCC -- DO NOT EDIT\n")
 	for _, function := range functions {
 		builder.WriteString(fmt.Sprintf("\nTEXT ·%v(SB), $0-32\n", function.Name))
 		for i, param := range function.Parameters {
-			builder.WriteString(fmt.Sprintf("\tMOVD %s+%d(FP), %s\n", param, i*8, registers[i]))
+			builder.WriteString(fmt.Sprintf("\t%s %s+%d(FP), %s\n", arch.CallOp, param, i*8, arch.Registers[i]))
 		}
-
 		for _, line := range function.Lines {
 			builder.WriteString(line.String())
 		}

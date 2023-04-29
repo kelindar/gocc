@@ -29,16 +29,16 @@ type Function struct {
 
 // Line represents a line of assembly code
 type Line struct {
-	Label    string
-	Assembly string
+	Labels   []string
 	Binary   []string
+	Assembly string
 }
 
 // String returns the string representation of a line in PLAN9 assembly
 func (line *Line) String() string {
 	var builder strings.Builder
-	if len(line.Label) > 0 {
-		builder.WriteString(line.Label)
+	for _, label := range line.Labels {
+		builder.WriteString(label)
 		builder.WriteString(":\n")
 	}
 
