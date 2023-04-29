@@ -133,6 +133,7 @@ func (t *TranslateUnit) generateGoStubs(functions []asm.Function) error {
 func (t *TranslateUnit) compile(args ...string) error {
 	args = append(args, "-mno-red-zone", "-mstackrealign", "-mllvm", "-inline-threshold=1000",
 		"-fno-asynchronous-unwind-tables", "-fno-exceptions", "-fno-rtti", "-ffast-math")
+	args = append(args, t.Arch.ClangFlags...)
 
 	clang, err := resolveClang()
 	if err != nil {
@@ -166,9 +167,8 @@ func (t *TranslateUnit) Translate() error {
 		return err
 	}
 
-	args := []string{"-d", t.Object}
-	args = append(args, t.Arch.DumpFlags...)
-	dump, err := runCommand("objdump", args...)
+	disassembler := append(t.Arch.Disassembler, "-d", t.Object)
+	dump, err := runCommand(disassembler[0], disassembler[1:]...)
 	if err != nil {
 		return err
 	}
