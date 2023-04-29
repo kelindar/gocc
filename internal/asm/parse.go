@@ -125,13 +125,23 @@ func ParseObjectDump(arch *config.Arch, dump string, functions []Function) error
 				binary   []string
 				assembly string
 			)
+
 			for i, s := range splits {
 				if s == "" || unicode.IsSpace(rune(s[0])) {
 					assembly = strings.Join(splits[i:], " ")
 					assembly = strings.TrimSpace(assembly)
 					break
 				}
-				binary = append(binary, s)
+
+				// If the binary representation is not separated with spaces, split it
+				switch {
+				case len(s) > 2:
+					for i := 0; i < len(s); i += 2 {
+						binary = append(binary, s[i:i+2])
+					}
+				default:
+					binary = append(binary, s)
+				}
 			}
 
 			switch {
