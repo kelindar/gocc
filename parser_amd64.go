@@ -22,6 +22,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kelindar/gocc/internal/asm"
 	"github.com/klauspost/asmfmt"
 )
 
@@ -37,55 +38,7 @@ var (
 	registers     = []string{"DI", "SI", "DX", "CX"}
 )
 
-type Line struct {
-	Label    string
-	Assembly string
-	Binary   []string
-}
-
-func (line *Line) String() string {
-	var builder strings.Builder
-	if len(line.Label) > 0 {
-		builder.WriteString(line.Label)
-		builder.WriteString(":\n")
-	}
-	builder.WriteString("\t")
-	if strings.HasPrefix(line.Assembly, "j") {
-		splits := strings.Split(line.Assembly, ".")
-		op := strings.TrimSpace(splits[0])
-		operand := splits[1]
-		builder.WriteString(fmt.Sprintf("%s %s", strings.ToUpper(op), operand))
-	} else {
-		pos := 0
-		for pos < len(line.Binary) {
-			if pos > 0 {
-				builder.WriteString("; ")
-			}
-			if len(line.Binary)-pos >= 8 {
-				builder.WriteString(fmt.Sprintf("QUAD $0x%v%v%v%v%v%v%v%v",
-					line.Binary[pos+7], line.Binary[pos+6], line.Binary[pos+5], line.Binary[pos+4],
-					line.Binary[pos+3], line.Binary[pos+2], line.Binary[pos+1], line.Binary[pos]))
-				pos += 8
-			} else if len(line.Binary)-pos >= 4 {
-				builder.WriteString(fmt.Sprintf("LONG $0x%v%v%v%v",
-					line.Binary[pos+3], line.Binary[pos+2], line.Binary[pos+1], line.Binary[pos]))
-				pos += 4
-			} else if len(line.Binary)-pos >= 2 {
-				builder.WriteString(fmt.Sprintf("WORD $0x%v%v", line.Binary[pos+1], line.Binary[pos]))
-				pos += 2
-			} else {
-				builder.WriteString(fmt.Sprintf("BYTE $0x%v", line.Binary[pos]))
-				pos += 1
-			}
-		}
-		builder.WriteString("\t// ")
-		builder.WriteString(line.Assembly)
-	}
-	builder.WriteString("\n")
-	return builder.String()
-}
-
-func parseAssembly(path string) (map[string][]Line, error) {
+func parseAssembly(path string) ([]asm.Function, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -98,30 +51,36 @@ func parseAssembly(path string) (map[string][]Line, error) {
 	}(file)
 
 	var (
-		functions    = make(map[string][]Line)
+		functions    = make([]asm.Function, 0, 8)
+		current      *asm.Function
 		functionName string
 		labelName    string
 	)
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if attributeLine.Match([]byte(line)) {
+		switch {
+		case attributeLine.MatchString(line):
 			continue
-		} else if nameLine.Match([]byte(line)) {
+		case nameLine.MatchString(line):
 			functionName = strings.Split(line, ":")[0]
-			functions[functionName] = make([]Line, 0)
-		} else if labelLine.Match([]byte(line)) {
+			functions = append(functions, asm.Function{
+				Name:  functionName,
+				Lines: make([]asm.Line, 0),
+			})
+			current = &functions[len(functions)-1]
+		case labelLine.MatchString(line):
 			labelName = strings.Split(line, ":")[0]
 			labelName = labelName[1:]
-			functions[functionName] = append(functions[functionName], Line{Label: labelName})
-		} else if codeLine.Match([]byte(line)) {
-			asm := strings.Split(line, "#")[0]
-			asm = strings.TrimSpace(asm)
+			current.Lines = append(current.Lines, asm.Line{Label: labelName})
+		case codeLine.MatchString(line):
+			code := strings.Split(line, "#")[0]
+			code = strings.TrimSpace(code)
 			if labelName == "" {
-				functions[functionName] = append(functions[functionName], Line{Assembly: asm})
+				current.Lines = append(current.Lines, asm.Line{Assembly: code})
 			} else {
-				lines := functions[functionName]
-				lines[len(lines)-1].Assembly = asm
+				current.Lines[len(current.Lines)-1].Assembly = code
 				labelName = ""
 			}
 		}
@@ -133,18 +92,24 @@ func parseAssembly(path string) (map[string][]Line, error) {
 	return functions, nil
 }
 
-func parseObjectDump(dump string, functions map[string][]Line) error {
+func parseObjectDump(dump string, functions []asm.Function) error {
 	var (
 		functionName string
+		functionIdx  int
+		current      *asm.Function
 		lineNumber   int
 	)
+
 	for i, line := range strings.Split(dump, "\n") {
 		line = strings.TrimSpace(line)
-		if symbolLine.Match([]byte(line)) {
+		switch {
+		case symbolLine.MatchString(line):
 			functionName = strings.Split(line, "<")[1]
 			functionName = strings.Split(functionName, ">")[0]
+			current = &functions[functionIdx]
 			lineNumber = 0
-		} else if dataLine.Match([]byte(line)) {
+			functionIdx++
+		case dataLine.MatchString(line):
 			data := strings.Split(line, ":")[1]
 			data = strings.TrimSpace(data)
 			splits := strings.Split(data, " ")
@@ -170,18 +135,18 @@ func parseObjectDump(dump string, functions map[string][]Line) error {
 				continue
 			case strings.HasPrefix(assembly, "cs nopw"):
 				continue
-			case lineNumber >= len(functions[functionName]):
+			case lineNumber >= len(current.Lines):
 				return fmt.Errorf("%d: unexpected objectdump line: %s, please compare assembly with objdump output", i, line)
 			}
 
-			functions[functionName][lineNumber].Binary = binary
+			current.Lines[lineNumber].Binary = binary
 			lineNumber++
 		}
 	}
 	return nil
 }
 
-func generateGoAssembly(path string, functions []Function) error {
+func generateGoAssembly(path string, functions []asm.Function) error {
 	// generate code
 	var builder strings.Builder
 	builder.WriteString(buildTags)

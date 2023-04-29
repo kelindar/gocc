@@ -22,6 +22,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kelindar/gocc/internal/asm"
 	"github.com/klauspost/asmfmt"
 )
 
@@ -37,55 +38,6 @@ var (
 	dataLine      = regexp.MustCompile(`^\w+:\s+\w+\s+.+$`)
 	registers     = []string{"R0", "R1", "R2", "R3"}
 )
-
-type Line struct {
-	Label    string
-	Assembly string
-	Binary   []string
-}
-
-func (line *Line) String() string {
-	var builder strings.Builder
-	if len(line.Label) > 0 {
-		builder.WriteString(line.Label)
-		builder.WriteString(":\n")
-	}
-
-	builder.WriteString("\t")
-	if strings.HasPrefix(line.Assembly, "j") {
-		splits := strings.Split(line.Assembly, ".")
-		op := strings.TrimSpace(splits[0])
-		operand := splits[1]
-		builder.WriteString(fmt.Sprintf("%s %s", strings.ToUpper(op), operand))
-	} else {
-		pos := 0
-		for pos < len(line.Binary) {
-			if pos > 0 {
-				builder.WriteString("; ")
-			}
-			if len(line.Binary)-pos >= 8 {
-				builder.WriteString(fmt.Sprintf("QUAD $0x%v%v%v%v%v%v%v%v",
-					line.Binary[pos+7], line.Binary[pos+6], line.Binary[pos+5], line.Binary[pos+4],
-					line.Binary[pos+3], line.Binary[pos+2], line.Binary[pos+1], line.Binary[pos]))
-				pos += 8
-			} else if len(line.Binary)-pos >= 4 {
-				builder.WriteString(fmt.Sprintf("LONG $0x%v%v%v%v",
-					line.Binary[pos+3], line.Binary[pos+2], line.Binary[pos+1], line.Binary[pos]))
-				pos += 4
-			} else if len(line.Binary)-pos >= 2 {
-				builder.WriteString(fmt.Sprintf("WORD $0x%v%v", line.Binary[pos+1], line.Binary[pos]))
-				pos += 2
-			} else {
-				builder.WriteString(fmt.Sprintf("BYTE $0x%v", line.Binary[pos]))
-				pos += 1
-			}
-		}
-		builder.WriteString("\t// ")
-		builder.WriteString(line.Assembly)
-	}
-	builder.WriteString("\n")
-	return builder.String()
-}
 
 func parseAssembly(path string) ([]Function, error) {
 	file, err := os.Open(path)
@@ -126,16 +78,14 @@ func parseAssembly(path string) ([]Function, error) {
 			})
 			current = &functions[len(functions)-1]
 		case codeLine.MatchString(line):
-			asm := strings.Split(line, ";")[0]
-			asm = strings.TrimSpace(asm)
+			code := strings.Split(line, ";")[0]
+			code = strings.TrimSpace(code)
 			if labelName == "" {
-				current.Lines = append(current.Lines, Line{Assembly: asm})
+				current.Lines = append(current.Lines, Line{Assembly: code})
 			} else {
-				current.Lines[len(current.Lines)-1].Assembly = asm
+				current.Lines[len(current.Lines)-1].Assembly = code
 				labelName = ""
 			}
-		default:
-			// println("unexpected line: " + line)
 		}
 	}
 
