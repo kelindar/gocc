@@ -20,5 +20,5 @@ require (
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/strutil v1.1.3 // indirect
-	modernc.org/token v1.0.1 // indirect
+	modernc.org/token v1.1.0 // indirect
 )
