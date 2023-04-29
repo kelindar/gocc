@@ -170,18 +170,22 @@ func (t *TranslateUnit) Translate() error {
 		return err
 	}
 
-	dump, err := runCommand("objdump", "-d", t.Object, "--insn-width", "16")
+	args := []string{"-d", t.Object}
+	if runtime.GOARCH == "amd64" {
+		args = append(args, "--insn-width", "16")
+	}
+
+	dump, err := runCommand("objdump", args...)
 	if err != nil {
 		return err
 	}
 
-	err = parseObjectDump(dump, assembly)
-	if err != nil {
+	if err = parseObjectDump(dump, assembly); err != nil {
 		return err
 	}
 
-	for i, name := range functions {
-		functions[i].Lines = assembly[name.Name]
+	for i, asm := range assembly {
+		functions[i].Lines = asm.Lines
 	}
 	return generateGoAssembly(t.GoAssembly, functions)
 }
