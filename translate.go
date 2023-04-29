@@ -24,17 +24,11 @@ import (
 	"strings"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/kelindar/gocc/internal/asm"
 	"modernc.org/cc/v3"
 )
 
 var supportedTypes = mapset.NewSet("int64_t", "long")
-
-type Function struct {
-	Name       string
-	Position   int
-	Parameters []string
-	Lines      []Line
-}
 
 type TranslateUnit struct {
 	Source     string
@@ -63,7 +57,7 @@ func NewTranslateUnit(source string, outputDir string, options ...string) Transl
 }
 
 // parseSource parse C source file and extract functions declarations.
-func (t *TranslateUnit) parseSource() ([]Function, error) {
+func (t *TranslateUnit) parseSource() ([]asm.Function, error) {
 	// List include paths.
 	includePaths, err := listIncludePaths()
 	if err != nil {
@@ -81,7 +75,7 @@ func (t *TranslateUnit) parseSource() ([]Function, error) {
 		return nil, err
 	}
 
-	var functions []Function
+	var functions []asm.Function
 	for _, nodes := range ast.Scope {
 		if len(nodes) != 1 || nodes[0].Position().Filename != t.Source {
 			continue
@@ -105,7 +99,7 @@ func (t *TranslateUnit) parseSource() ([]Function, error) {
 	return functions, nil
 }
 
-func (t *TranslateUnit) generateGoStubs(functions []Function) error {
+func (t *TranslateUnit) generateGoStubs(functions []asm.Function) error {
 	// generate code
 	var builder strings.Builder
 	builder.WriteString(buildTags)
@@ -184,8 +178,8 @@ func (t *TranslateUnit) Translate() error {
 		return err
 	}
 
-	for i, asm := range assembly {
-		functions[i].Lines = asm.Lines
+	for i, v := range assembly {
+		functions[i].Lines = v.Lines
 	}
 	return generateGoAssembly(t.GoAssembly, functions)
 }
@@ -231,12 +225,12 @@ func (t *TranslateUnit) fixSource(path string) (string, error) {
 }
 
 // convertFunction extracts the function definition from cc.DirectDeclarator.
-func (t *TranslateUnit) convertFunction(declarator *cc.DirectDeclarator) (Function, error) {
+func (t *TranslateUnit) convertFunction(declarator *cc.DirectDeclarator) (asm.Function, error) {
 	params, err := t.convertFunctionParameters(declarator.ParameterTypeList.ParameterList)
 	if err != nil {
-		return Function{}, err
+		return asm.Function{}, err
 	}
-	return Function{
+	return asm.Function{
 		Name:       declarator.DirectDeclarator.Token.Value.String(),
 		Position:   declarator.Position().Line,
 		Parameters: params,

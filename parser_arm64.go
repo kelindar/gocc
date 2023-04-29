@@ -39,7 +39,7 @@ var (
 	registers     = []string{"R0", "R1", "R2", "R3"}
 )
 
-func parseAssembly(path string) ([]Function, error) {
+func parseAssembly(path string) ([]asm.Function, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -52,8 +52,8 @@ func parseAssembly(path string) ([]Function, error) {
 	}(file)
 
 	var (
-		functions    = make([]Function, 0, 8)
-		current      *Function
+		functions    = make([]asm.Function, 0, 8)
+		current      *asm.Function
 		functionName string
 		labelName    string
 	)
@@ -69,19 +69,19 @@ func parseAssembly(path string) ([]Function, error) {
 		case labelLine.MatchString(line):
 			labelName = strings.Split(line, ":")[0]
 			labelName = labelName[1:]
-			current.Lines = append(current.Lines, Line{Label: labelName})
+			current.Lines = append(current.Lines, asm.Line{Label: labelName})
 		case nameLine.MatchString(line):
 			functionName = strings.Split(line, ":")[0]
-			functions = append(functions, Function{
+			functions = append(functions, asm.Function{
 				Name:  functionName,
-				Lines: make([]Line, 0),
+				Lines: make([]asm.Line, 0),
 			})
 			current = &functions[len(functions)-1]
 		case codeLine.MatchString(line):
 			code := strings.Split(line, ";")[0]
 			code = strings.TrimSpace(code)
 			if labelName == "" {
-				current.Lines = append(current.Lines, Line{Assembly: code})
+				current.Lines = append(current.Lines, asm.Line{Assembly: code})
 			} else {
 				current.Lines[len(current.Lines)-1].Assembly = code
 				labelName = ""
@@ -95,11 +95,11 @@ func parseAssembly(path string) ([]Function, error) {
 	return functions, nil
 }
 
-func parseObjectDump(dump string, functions []Function) error {
+func parseObjectDump(dump string, functions []asm.Function) error {
 	var (
 		functionName string
 		functionIdx  int
-		current      *Function
+		current      *asm.Function
 		lineNumber   int
 	)
 
@@ -139,7 +139,7 @@ func parseObjectDump(dump string, functions []Function) error {
 	return nil
 }
 
-func generateGoAssembly(path string, functions []Function) error {
+func generateGoAssembly(path string, functions []asm.Function) error {
 	// generate code
 	var builder strings.Builder
 	builder.WriteString(buildTags)
