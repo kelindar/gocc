@@ -44,6 +44,7 @@ func listIncludePaths() ([]string, error) {
 			paths = append(paths, path)
 		}
 	}
+
 	return paths, nil
 }
 

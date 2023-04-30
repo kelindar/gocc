@@ -1,8 +1,8 @@
 // Copyright (c) Roman Atachiants and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
-#include <arm_neon.h>
 #include <stdint.h>
+#include <arm_neon.h>
 
 void f32_axpy(const float *x, float *y, const uint64_t size, const float alpha) {
     float32x4_t alpha_vec = vdupq_n_f32(alpha);

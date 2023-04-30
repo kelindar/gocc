@@ -60,13 +60,12 @@ func NewTranslateUnit(arch *config.Arch, source string, outputDir string, option
 
 // parseSource parse C source file and extract functions declarations.
 func (t *TranslateUnit) parseSource() ([]asm.Function, error) {
-	// List include paths.
 	includePaths, err := listIncludePaths()
 	if err != nil {
 		return nil, err
 	}
 
-	source, err := t.fixSource(t.Source)
+	source, err := t.redactSource(t.Source)
 	if err != nil {
 		return nil, err
 	}
@@ -110,9 +109,6 @@ func (t *TranslateUnit) generateGoStubs(functions []asm.Function) error {
 	builder.WriteString(fmt.Sprintf("package %v\n\n", t.Package))
 	builder.WriteString("import \"unsafe\"\n")
 	for _, function := range functions {
-		/*builder.WriteString("\n//go:noescape,nosplit\n")
-		builder.WriteString(fmt.Sprintf("func %v(%s unsafe.Pointer)\n",
-			function.Name, strings.Join(function.Parameters, ", ")))*/
 		builder.WriteString(function.String())
 	}
 
@@ -186,47 +182,42 @@ func (t *TranslateUnit) Translate() error {
 	return asm.Generate(t.Arch, t.GoAssembly, functions)
 }
 
-// fixSource fixes compile errors in source.
-func (t *TranslateUnit) fixSource(path string) (string, error) {
+// redactSource removes code from the source and only leaves function declarations.
+// This is done to avoid parsing errors when the source is not compatible with the compiler.
+func (t *TranslateUnit) redactSource(path string) (string, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
 
-	var builder strings.Builder
-	switch t.Arch.Name {
-	case "amd64":
-		t.Offset = -1
-		builder.WriteString("#define __STDC_HOSTED__ 1\n")
-		builder.Write(bytes)
-		return builder.String(), nil
-
-	case "arm64":
-		var clauseCount int
-		for _, line := range strings.Split(string(bytes), "\n") {
-			switch {
-			case strings.HasPrefix(line, "#include"):
-				// Do nothing
-			case strings.Contains(line, "{"):
-				if clauseCount == 0 {
-					builder.WriteString(line[:strings.Index(line, "{")+1])
-				}
-				clauseCount++
-			case strings.Contains(line, "}"):
-				clauseCount--
-				if clauseCount == 0 {
-					builder.WriteString(line[strings.Index(line, "}"):])
-				}
-			case clauseCount == 0:
-				builder.WriteString(line)
+	var src strings.Builder
+	src.WriteString("#define __STDC_HOSTED__ 1\n")
+	src.WriteString("#include <stdint.h>\n\n")
+	var clauseCount int
+	for _, line := range strings.Split(string(bytes), "\n") {
+		switch {
+		case strings.HasPrefix(line, "#include"):
+			continue
+		case strings.HasPrefix(line, "//"):
+			continue
+		case strings.Contains(line, "{"):
+			if clauseCount == 0 {
+				src.WriteString(line[:strings.Index(line, "{")+1])
+				src.WriteString("\n // removed for compatibility\n")
 			}
-
-			builder.WriteRune('\n')
+			clauseCount++
+		case strings.Contains(line, "}"):
+			clauseCount--
+			if clauseCount == 0 {
+				src.WriteString(line[strings.Index(line, "}"):])
+				src.WriteRune('\n')
+			}
+		default:
+			continue
 		}
-		return builder.String(), nil
-	default:
-		return "", fmt.Errorf("unsupported arch: %s", t.Arch.Name)
 	}
+
+	return src.String(), nil
 }
 
 // convertFunction extracts the function definition from cc.DirectDeclarator.
@@ -237,7 +228,7 @@ func (t *TranslateUnit) convertFunction(declarator *cc.DirectDeclarator) (asm.Fu
 	}
 
 	return asm.Function{
-		Name:       declarator.DirectDeclarator.Token.Value.String(),
+		Name:       declarator.DirectDeclarator.Token.String(),
 		Position:   declarator.Position().Line,
 		Parameters: params,
 	}, nil
