@@ -28,7 +28,7 @@ import (
 	"modernc.org/cc/v3"
 )
 
-var supportedTypes = mapset.NewSet("int64_t", "long")
+var supportedTypes = mapset.NewSet("int64_t", "uint64_t", "long", "float")
 
 type TranslateUnit struct {
 	Arch       *config.Arch
@@ -88,6 +88,7 @@ func (t *TranslateUnit) parseSource() ([]asm.Function, error) {
 			if funcIdent.Case != cc.DirectDeclaratorFuncParam {
 				continue
 			}
+
 			if function, err := t.convertFunction(funcIdent); err != nil {
 				return nil, err
 			} else {
@@ -109,9 +110,10 @@ func (t *TranslateUnit) generateGoStubs(functions []asm.Function) error {
 	builder.WriteString(fmt.Sprintf("package %v\n\n", t.Package))
 	builder.WriteString("import \"unsafe\"\n")
 	for _, function := range functions {
-		builder.WriteString("\n//go:noescape\n")
+		/*builder.WriteString("\n//go:noescape,nosplit\n")
 		builder.WriteString(fmt.Sprintf("func %v(%s unsafe.Pointer)\n",
-			function.Name, strings.Join(function.Parameters, ", ")))
+			function.Name, strings.Join(function.Parameters, ", ")))*/
+		builder.WriteString(function.String())
 	}
 
 	// write file
@@ -155,10 +157,11 @@ func (t *TranslateUnit) Translate() error {
 	if err != nil {
 		return err
 	}
-	if err = t.generateGoStubs(functions); err != nil {
+
+	if err := t.generateGoStubs(functions); err != nil {
 		return err
 	}
-	if err = t.compile(t.Options...); err != nil {
+	if err := t.compile(t.Options...); err != nil {
 		return err
 	}
 
@@ -232,6 +235,7 @@ func (t *TranslateUnit) convertFunction(declarator *cc.DirectDeclarator) (asm.Fu
 	if err != nil {
 		return asm.Function{}, err
 	}
+
 	return asm.Function{
 		Name:       declarator.DirectDeclarator.Token.Value.String(),
 		Position:   declarator.Position().Line,
@@ -240,17 +244,30 @@ func (t *TranslateUnit) convertFunction(declarator *cc.DirectDeclarator) (asm.Fu
 }
 
 // convertFunctionParameters extracts function parameters from cc.ParameterList.
-func (t *TranslateUnit) convertFunctionParameters(params *cc.ParameterList) ([]string, error) {
+func (t *TranslateUnit) convertFunctionParameters(params *cc.ParameterList) ([]asm.Param, error) {
 	declaration := params.ParameterDeclaration
-	paramName := declaration.Declarator.DirectDeclarator.Token.Value
-	paramType := declaration.DeclarationSpecifiers.TypeSpecifier.Token.Value
 	isPointer := declaration.Declarator.Pointer != nil
+
+	// If it's a const, go deeper
+	specifier := declaration.DeclarationSpecifiers
+	if q := specifier.TypeQualifier; q != nil && q.Case == cc.TypeQualifierConst {
+		specifier = specifier.DeclarationSpecifiers
+	}
+
+	paramName := declaration.Declarator.DirectDeclarator.Token.Value
+	paramType := specifier.TypeSpecifier.Token.Value
 	if !isPointer && !supportedTypes.Contains(paramType.String()) {
 		position := declaration.Position()
 		return nil, fmt.Errorf("%v:%v:%v: error: unsupported type: %v\n",
 			position.Filename, position.Line+t.Offset, position.Column, paramType)
 	}
-	paramNames := []string{paramName.String()}
+
+	paramNames := []asm.Param{{
+		Name:      paramName.String(),
+		Type:      paramType.String(),
+		IsPointer: isPointer,
+	}}
+
 	if params.ParameterList != nil {
 		if nextParamNames, err := t.convertFunctionParameters(params.ParameterList); err != nil {
 			return nil, err

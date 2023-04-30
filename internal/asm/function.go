@@ -23,8 +23,23 @@ import (
 type Function struct {
 	Name       string
 	Position   int
-	Parameters []string
+	Parameters []Param
 	Lines      []Line
+}
+
+// String returns the function signature for a Go stub
+func (f *Function) String() string {
+	var builder strings.Builder
+	builder.WriteString("\n//go:noescape,nosplit\n")
+	builder.WriteString(fmt.Sprintf("func %s(", f.Name))
+	for i, param := range f.Parameters {
+		if i > 0 {
+			builder.WriteString(", ")
+		}
+		builder.WriteString(param.String())
+	}
+	builder.WriteString(")\n")
+	return builder.String()
 }
 
 // Line represents a line of assembly code
@@ -76,4 +91,41 @@ func (line *Line) String() string {
 	}
 	builder.WriteString("\n")
 	return builder.String()
+}
+
+// Param represents a function parameter
+type Param struct {
+	Type      string // Type of the parameter (C type)
+	Name      string // Name of the parameter
+	IsPointer bool   // Whether the parameter is a pointer
+}
+
+// String returns the Go string representation of a parameter
+func (p *Param) String() string {
+	if p.IsPointer {
+		return fmt.Sprintf("%s unsafe.Pointer", p.Name)
+	}
+
+	switch p.Type {
+	case "int16_t":
+		return fmt.Sprintf("%s int16", p.Name)
+	case "int32_t":
+		return fmt.Sprintf("%s int32", p.Name)
+	case "int64_t":
+		return fmt.Sprintf("%s int64", p.Name)
+	case "uint16_t":
+		return fmt.Sprintf("%s uint16", p.Name)
+	case "uint32_t":
+		return fmt.Sprintf("%s uint32", p.Name)
+	case "uint64_t":
+		return fmt.Sprintf("%s uint64", p.Name)
+	case "long":
+		return fmt.Sprintf("%s int", p.Name)
+	case "float":
+		return fmt.Sprintf("%s float32", p.Name)
+	case "double":
+		return fmt.Sprintf("%s float64", p.Name)
+	default:
+		panic(fmt.Sprintf("unknown type %s", p.Type))
+	}
 }
