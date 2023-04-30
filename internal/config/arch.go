@@ -76,17 +76,17 @@ func ARM64() *Arch {
 		Name:         "arm64",
 		Attribute:    regexp.MustCompile(`^\s+\..+$`),
 		Function:     regexp.MustCompile(`^\w+:.*$`),
-		Label:        regexp.MustCompile(`^[A-Z0-9]+_\d+:.*$`),
+		Label:        regexp.MustCompile(`^.[A-Z0-9]+_\d+:.*$`),
 		Code:         regexp.MustCompile(`^\s+\w+.+$`),
 		Symbol:       regexp.MustCompile(`^\w+\s+<\w+>:$`),
 		Data:         regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
-		Comment:      regexp.MustCompile(`^\s*@.*$`),
+		Comment:      regexp.MustCompile(`^\s*//.*$`),
 		Registers:    []string{"R0", "R1", "R2", "R3"},
 		BuildTags:    "//go:build !noasm && arm64\n",
-		CommentCh:    "@",
+		CommentCh:    "//",
 		CallOp:       "MOVD",
 		Disassembler: []string{"aarch64-linux-gnu-objdump"},
-		ClangFlags:   []string{"--target=arm-linux-gnueabihf", "-march=armv7-a", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"},
+		ClangFlags:   []string{"--target=aarch64-linux-gnu", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"},
 	}
 }
 
