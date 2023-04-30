@@ -17,6 +17,7 @@ package config
 import (
 	"fmt"
 	"regexp"
+	"runtime"
 )
 
 // Arch represents a context for a specific architecture
@@ -44,7 +45,7 @@ func For(arch string) (*Arch, error) {
 		return AMD64(), nil
 	case "arm64":
 		return ARM64(), nil
-	case "m1":
+	case "apple":
 		return Apple(), nil
 	default:
 		return nil, fmt.Errorf("unsupported architecture: %s", arch)
@@ -85,7 +86,7 @@ func ARM64() *Arch {
 		BuildTags:    "//go:build !noasm && !darwin && arm64\n",
 		CommentCh:    "//",
 		CallOp:       "MOVD",
-		Disassembler: []string{"aarch64-linux-gnu-objdump"},
+		Disassembler: []string{"aarch64-linux-gnu-objdump"}, // llvm-objdump also works
 		ClangFlags:   []string{"--target=aarch64-linux-gnu", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"},
 	}
 }
@@ -93,6 +94,13 @@ func ARM64() *Arch {
 // Apple returns a configuration for ARM64 architecture. On my M1 mac, supported features are:
 // AESARM, ASIMD, ASIMDDP, ASIMDHP, ASIMDRDM, ATOMICS, CRC32, DCPOP, FCMA, FP, FPHP, GPA, JSCVT, LRCPC, PMULL, SHA1, SHA2, SHA3, SHA512
 func Apple() *Arch {
+	if runtime.GOOS != "darwin" {
+		arch := ARM64()
+		arch.Disassembler = []string{"llvm-objdump-15"}
+		arch.ClangFlags = []string{"--target=aarch64-apple-darwin", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"}
+		return arch
+	}
+
 	return &Arch{
 		Name:         "arm64",
 		Attribute:    regexp.MustCompile(`^\s+\..+$`),
