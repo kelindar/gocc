@@ -44,6 +44,8 @@ func For(arch string) (*Arch, error) {
 		return AMD64(), nil
 	case "arm64":
 		return ARM64(), nil
+	case "m1":
+		return DarwinARM(), nil
 	default:
 		return nil, fmt.Errorf("unsupported architecture: %s", arch)
 	}
@@ -85,5 +87,24 @@ func ARM64() *Arch {
 		CallOp:       "MOVD",
 		Disassembler: []string{"aarch64-linux-gnu-objdump"},
 		ClangFlags:   []string{"--target=arm-linux-gnueabihf", "-march=armv7-a", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"},
+	}
+}
+
+// DarwinARM returns a configuration for ARM64 architecture
+func DarwinARM() *Arch {
+	return &Arch{
+		Name:         "arm64",
+		Attribute:    regexp.MustCompile(`^\s+\..+$`),
+		Function:     regexp.MustCompile(`^\w+:.*$`),
+		Label:        regexp.MustCompile(`^[A-Z0-9]+_\d+:.*$`),
+		Code:         regexp.MustCompile(`^\s+\w+.+$`),
+		Symbol:       regexp.MustCompile(`^\w+\s+<\w+>:$`),
+		Data:         regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
+		Comment:      regexp.MustCompile(`^\s*;.*$`),
+		Registers:    []string{"R0", "R1", "R2", "R3"},
+		BuildTags:    "//go:build !noasm && arm64\n",
+		CommentCh:    ";",
+		CallOp:       "MOVD",
+		Disassembler: []string{"objdump"},
 	}
 }

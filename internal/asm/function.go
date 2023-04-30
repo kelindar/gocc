@@ -18,6 +18,8 @@ package asm
 import (
 	"fmt"
 	"strings"
+
+	"github.com/kelindar/gocc/internal/config"
 )
 
 type Function struct {
@@ -44,13 +46,13 @@ func (f *Function) String() string {
 
 // Line represents a line of assembly code
 type Line struct {
-	Labels   []string
-	Binary   []string
-	Assembly string
+	Labels   []string // Labels for the line
+	Binary   []string // Binary representation of the line
+	Assembly string   // Assembly representation of the line
 }
 
-// String returns the string representation of a line in PLAN9 assembly
-func (line *Line) String() string {
+// Compile returns the string representation of a line in PLAN9 assembly
+func (line *Line) Compile(arch *config.Arch) string {
 	var builder strings.Builder
 	for _, label := range line.Labels {
 		builder.WriteString(label)
@@ -63,32 +65,47 @@ func (line *Line) String() string {
 		op := strings.TrimSpace(splits[0])
 		operand := splits[1]
 		builder.WriteString(fmt.Sprintf("%s %s", strings.ToUpper(op), operand))
-	} else {
-		pos := 0
-		for pos < len(line.Binary) {
-			if pos > 0 {
-				builder.WriteString("; ")
-			}
-			if len(line.Binary)-pos >= 8 {
-				builder.WriteString(fmt.Sprintf("QUAD $0x%v%v%v%v%v%v%v%v",
-					line.Binary[pos+7], line.Binary[pos+6], line.Binary[pos+5], line.Binary[pos+4],
-					line.Binary[pos+3], line.Binary[pos+2], line.Binary[pos+1], line.Binary[pos]))
-				pos += 8
-			} else if len(line.Binary)-pos >= 4 {
-				builder.WriteString(fmt.Sprintf("LONG $0x%v%v%v%v",
-					line.Binary[pos+3], line.Binary[pos+2], line.Binary[pos+1], line.Binary[pos]))
-				pos += 4
-			} else if len(line.Binary)-pos >= 2 {
-				builder.WriteString(fmt.Sprintf("WORD $0x%v%v", line.Binary[pos+1], line.Binary[pos]))
-				pos += 2
-			} else {
-				builder.WriteString(fmt.Sprintf("BYTE $0x%v", line.Binary[pos]))
-				pos += 1
-			}
-		}
+		builder.WriteString("\n")
+		return builder.String()
+	}
+
+	// Special case for arm64, since it's a RISC architecture
+	if arch != nil && arch.Name == "arm64" && len(line.Binary) == 4 {
+		builder.WriteString(fmt.Sprintf("WORD $0x%v%v%v%v",
+			line.Binary[3], line.Binary[2], line.Binary[1], line.Binary[0]))
 		builder.WriteString("\t// ")
 		builder.WriteString(line.Assembly)
+		builder.WriteString("\n")
+		return builder.String()
 	}
+
+	// Dynamic length, assuming WORD = 32-bit
+	for pos := 0; pos < len(line.Binary); {
+		if pos > 0 {
+			builder.WriteString("; ")
+		}
+
+		switch {
+		case len(line.Binary)-pos >= 8:
+			builder.WriteString(fmt.Sprintf("QUAD $0x%v%v%v%v%v%v%v%v",
+				line.Binary[pos+7], line.Binary[pos+6], line.Binary[pos+5], line.Binary[pos+4],
+				line.Binary[pos+3], line.Binary[pos+2], line.Binary[pos+1], line.Binary[pos]))
+			pos += 8
+		case len(line.Binary)-pos >= 4:
+			builder.WriteString(fmt.Sprintf("LONG $0x%v%v%v%v",
+				line.Binary[pos+3], line.Binary[pos+2], line.Binary[pos+1], line.Binary[pos]))
+			pos += 4
+		case len(line.Binary)-pos >= 2:
+			builder.WriteString(fmt.Sprintf("WORD $0x%v%v", line.Binary[pos+1], line.Binary[pos]))
+			pos += 2
+		case len(line.Binary)-pos >= 1:
+			builder.WriteString(fmt.Sprintf("BYTE $0x%v", line.Binary[pos]))
+			pos += 1
+		}
+	}
+
+	builder.WriteString("\t// ")
+	builder.WriteString(line.Assembly)
 	builder.WriteString("\n")
 	return builder.String()
 }
@@ -119,13 +136,19 @@ func (p *Param) String() string {
 		return fmt.Sprintf("%s uint32", p.Name)
 	case "uint64_t":
 		return fmt.Sprintf("%s uint64", p.Name)
-	case "long":
-		return fmt.Sprintf("%s int", p.Name)
 	case "float":
 		return fmt.Sprintf("%s float32", p.Name)
 	case "double":
 		return fmt.Sprintf("%s float64", p.Name)
+	case "unsignedlonglong":
+		return fmt.Sprintf("%s uint64", p.Name)
+	case "unsignedint":
+		return fmt.Sprintf("%s uint32", p.Name)
+	case "longlong":
+		return fmt.Sprintf("%s int64", p.Name)
+	case "int":
+		return fmt.Sprintf("%s int32", p.Name)
 	default:
-		panic(fmt.Sprintf("unknown type %s", p.Type))
+		panic(fmt.Sprintf("gocc: unknown type %s", p.Type))
 	}
 }

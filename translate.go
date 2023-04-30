@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -28,7 +29,7 @@ import (
 	"modernc.org/cc/v3"
 )
 
-var supportedTypes = mapset.NewSet("int64_t", "uint64_t", "long", "float")
+var supportedTypes = mapset.NewSet("int64_t", "uint64_t", "float", "unsignedlonglong", "longlong", "long", "unsignedlong", "int", "unsignedint")
 
 type TranslateUnit struct {
 	Arch       *config.Arch
@@ -192,7 +193,11 @@ func (t *TranslateUnit) redactSource(path string) (string, error) {
 
 	var src strings.Builder
 	src.WriteString("#define __STDC_HOSTED__ 1\n")
-	src.WriteString("#include <stdint.h>\n\n")
+	src.WriteString("#define uint64_t unsigned long long\n")
+	src.WriteString("#define uint32_t unsigned int\n")
+	src.WriteString("#define int64_t long long\n")
+	src.WriteString("#define int32_t int\n")
+
 	var clauseCount int
 	for _, line := range strings.Split(string(bytes), "\n") {
 		switch {
@@ -238,24 +243,18 @@ func (t *TranslateUnit) convertFunction(declarator *cc.DirectDeclarator) (asm.Fu
 func (t *TranslateUnit) convertFunctionParameters(params *cc.ParameterList) ([]asm.Param, error) {
 	declaration := params.ParameterDeclaration
 	isPointer := declaration.Declarator.Pointer != nil
-
-	// If it's a const, go deeper
-	specifier := declaration.DeclarationSpecifiers
-	if q := specifier.TypeQualifier; q != nil && q.Case == cc.TypeQualifierConst {
-		specifier = specifier.DeclarationSpecifiers
-	}
-
 	paramName := declaration.Declarator.DirectDeclarator.Token.Value
-	paramType := specifier.TypeSpecifier.Token.Value
-	if !isPointer && !supportedTypes.Contains(paramType.String()) {
+	paramType := typeOf(declaration.DeclarationSpecifiers)
+
+	if !isPointer && !supportedTypes.Contains(paramType) {
 		position := declaration.Position()
-		return nil, fmt.Errorf("%v:%v:%v: error: unsupported type: %v\n",
+		return nil, fmt.Errorf("gocc: [%v:%v:%v] unsupported type: %v\n",
 			position.Filename, position.Line+t.Offset, position.Column, paramType)
 	}
 
 	paramNames := []asm.Param{{
 		Name:      paramName.String(),
-		Type:      paramType.String(),
+		Type:      paramType,
 		IsPointer: isPointer,
 	}}
 
@@ -278,4 +277,33 @@ func resolveClang() (string, error) {
 		}
 	}
 	return "", fmt.Errorf(`clang compiler not found, install using \n bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"`)
+}
+
+// typeOf returns the type of the given value, recursively.
+func typeOf(v any) string {
+	if rv := reflect.ValueOf(v); rv.Kind() == reflect.Ptr && rv.IsNil() {
+		return ""
+	}
+
+	switch s := v.(type) {
+	case *cc.TypeQualifier:
+		return s.Token.String()
+	case *cc.TypeSpecifier:
+		return s.Token.String()
+	case *cc.DeclarationSpecifiers:
+		var result string
+		switch s.Case {
+		case cc.DeclarationSpecifiersTypeQual:
+			result += typeOf(s.TypeSpecifier)
+			result += typeOf(s.DeclarationSpecifiers)
+		case cc.DeclarationSpecifiersTypeSpec:
+			result += typeOf(s.TypeSpecifier)
+			result += typeOf(s.DeclarationSpecifiers)
+		default:
+			panic(fmt.Sprintf("gocc: unexpected specifiers case: %v", s.Case))
+		}
+		return result
+	default:
+		panic(fmt.Sprintf("gocc: unexpected specifier type: %T", v))
+	}
 }

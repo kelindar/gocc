@@ -175,7 +175,7 @@ func Generate(arch *config.Arch, path string, functions []Function) error {
 			builder.WriteString(fmt.Sprintf("\t%s %s+%d(FP), %s\n", arch.CallOp, param.Name, i*8, arch.Registers[i]))
 		}
 		for _, line := range function.Lines {
-			builder.WriteString(line.String())
+			builder.WriteString(line.Compile(arch))
 		}
 	}
 
