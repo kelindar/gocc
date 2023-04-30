@@ -50,10 +50,10 @@ func NewTranslateUnit(arch *config.Arch, source string, outputDir string, option
 	return TranslateUnit{
 		Arch:       arch,
 		Source:     source,
-		Assembly:   noExtSourcePath + ".s",
-		Object:     noExtSourcePath + ".o",
-		GoAssembly: filepath.Join(outputDir, noExtSourceBase+".s"),
-		Go:         filepath.Join(outputDir, noExtSourceBase+".go"),
+		Assembly:   fmt.Sprintf("%s.s", noExtSourcePath),
+		Object:     fmt.Sprintf("%s.o", noExtSourcePath),
+		GoAssembly: filepath.Join(outputDir, fmt.Sprintf("%s.s", noExtSourceBase)),
+		Go:         filepath.Join(outputDir, fmt.Sprintf("%s.go", noExtSourceBase)),
 		Package:    filepath.Base(outputDir),
 		Options:    options,
 	}

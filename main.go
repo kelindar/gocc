@@ -74,6 +74,7 @@ var command = &cobra.Command{
 				os.Exit(1)
 			}
 		}
+
 		var options []string
 		machineOptions, _ := cmd.PersistentFlags().GetStringSlice("machine-option")
 		for _, m := range machineOptions {

@@ -45,7 +45,7 @@ func For(arch string) (*Arch, error) {
 	case "arm64":
 		return ARM64(), nil
 	case "m1":
-		return DarwinARM(), nil
+		return Apple(), nil
 	default:
 		return nil, fmt.Errorf("unsupported architecture: %s", arch)
 	}
@@ -82,7 +82,7 @@ func ARM64() *Arch {
 		Data:         regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
 		Comment:      regexp.MustCompile(`^\s*//.*$`),
 		Registers:    []string{"R0", "R1", "R2", "R3"},
-		BuildTags:    "//go:build !noasm && arm64\n",
+		BuildTags:    "//go:build !noasm && !darwin && arm64\n",
 		CommentCh:    "//",
 		CallOp:       "MOVD",
 		Disassembler: []string{"aarch64-linux-gnu-objdump"},
@@ -90,8 +90,9 @@ func ARM64() *Arch {
 	}
 }
 
-// DarwinARM returns a configuration for ARM64 architecture
-func DarwinARM() *Arch {
+// Apple returns a configuration for ARM64 architecture. On my M1 mac, supported features are:
+// AESARM, ASIMD, ASIMDDP, ASIMDHP, ASIMDRDM, ATOMICS, CRC32, DCPOP, FCMA, FP, FPHP, GPA, JSCVT, LRCPC, PMULL, SHA1, SHA2, SHA3, SHA512
+func Apple() *Arch {
 	return &Arch{
 		Name:         "arm64",
 		Attribute:    regexp.MustCompile(`^\s+\..+$`),
@@ -102,7 +103,7 @@ func DarwinARM() *Arch {
 		Data:         regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
 		Comment:      regexp.MustCompile(`^\s*;.*$`),
 		Registers:    []string{"R0", "R1", "R2", "R3"},
-		BuildTags:    "//go:build !noasm && arm64\n",
+		BuildTags:    "//go:build !noasm && darwin && arm64\n",
 		CommentCh:    ";",
 		CallOp:       "MOVD",
 		Disassembler: []string{"objdump"},

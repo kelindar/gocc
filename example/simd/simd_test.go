@@ -87,7 +87,7 @@ func TestGenericMatmul(t *testing.T) {
 	assert.Equal(t, []float32{19, 22, 43, 50}, o)
 }
 
-func TestMatmul(t *testing.T) {
+func TestMatmulNative(t *testing.T) {
 	x := []float32{1, 2, 3, 4}
 	y := []float32{5, 6, 7, 8}
 	o := make([]float32, 4)
@@ -98,6 +98,15 @@ func TestMatmul(t *testing.T) {
 	)
 
 	assert.Equal(t, []float32{19, 22, 43, 50}, o)
+}
+
+func TestMatmul(t *testing.T) {
+	x := Matrix{Rows: 2, Cols: 2, Data: []float32{1, 2, 3, 4}}
+	y := Matrix{Rows: 2, Cols: 2, Data: []float32{5, 6, 7, 8}}
+	o := Matrix{Rows: 2, Cols: 2, Data: make([]float32, 4)}
+
+	Matmul(&o, &x, &y)
+	assert.Equal(t, []float32{19, 22, 43, 50}, o.Data)
 }
 
 // newTestMatrix creates a new matrix

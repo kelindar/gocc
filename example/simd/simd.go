@@ -4,13 +4,20 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"runtime"
 	"unsafe"
 
 	"github.com/klauspost/cpuid/v2"
 )
 
 var (
-	avx2                 = cpuid.CPU.Supports(cpuid.AVX2) && cpuid.CPU.Supports(cpuid.FMA3)
+	avx2     = cpuid.CPU.Supports(cpuid.AVX2) && cpuid.CPU.Supports(cpuid.FMA3)
+	apple    = runtime.GOARCH == "arm64" && runtime.GOOS == "darwin"
+	neon     = runtime.GOARCH == "arm64" && cpuid.CPU.Supports(cpuid.SVE)
+	hardware = avx2 || apple || neon
+)
+
+var (
 	errZeroLength        = errors.New("mat: zero length in matrix dimension")
 	errNegativeDimension = errors.New("mat: negative dimension")
 	errShape             = errors.New("mat: dimension mismatch")
@@ -19,7 +26,7 @@ var (
 // Matmul multiplies matrix M by N and writes the result into dst
 func Matmul(dst, m, n *Matrix) {
 	switch {
-	case avx2:
+	case hardware:
 		f32_matmul(unsafe.Pointer(&dst.Data[0]), unsafe.Pointer(&m.Data[0]), unsafe.Pointer(&n.Data[0]),
 			dimensionsOf(m.Rows, m.Cols, n.Rows, n.Cols),
 		)
