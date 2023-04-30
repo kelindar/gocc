@@ -136,7 +136,8 @@ func ParseObjectDump(arch *config.Arch, dump string, functions []Function) error
 				// If the binary representation is not separated with spaces, split it
 				switch {
 				case len(s) > 2:
-					for i := 0; i < len(s); i += 2 {
+					// Iterate backwards
+					for i := len(s) - 2; i >= 0; i -= 2 {
 						binary = append(binary, s[i:i+2])
 					}
 				default:

@@ -15,11 +15,9 @@
 package config
 
 import (
-	"encoding/binary"
 	"fmt"
 	"regexp"
 	"runtime"
-	"unsafe"
 )
 
 // Arch represents a context for a specific architecture
@@ -100,7 +98,7 @@ func Apple() *Arch {
 		arch := ARM64()
 		arch.Disassembler = []string{"llvm-objdump-15"}
 		arch.BuildTags = "//go:build !noasm && darwin && arm64\n"
-		arch.ClangFlags = []string{"--target=aarch64-apple-darwin", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"}
+		arch.ClangFlags = []string{"--target=aarch64-apple-darwin"}
 		return arch
 	}
 
@@ -118,21 +116,5 @@ func Apple() *Arch {
 		CommentCh:    ";",
 		CallOp:       "MOVD",
 		Disassembler: []string{"objdump"},
-	}
-}
-
-// NativeEndian is the native endianness of the current architecture
-var NativeEndian binary.ByteOrder
-
-func init() {
-	buf := [2]byte{}
-	*(*uint16)(unsafe.Pointer(&buf[0])) = uint16(0xABCD)
-	switch buf {
-	case [2]byte{0xCD, 0xAB}:
-		NativeEndian = binary.LittleEndian
-	case [2]byte{0xAB, 0xCD}:
-		NativeEndian = binary.BigEndian
-	default:
-		panic("gocc: could not determine native endianness")
 	}
 }
