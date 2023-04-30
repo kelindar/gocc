@@ -97,6 +97,7 @@ func Apple() *Arch {
 	if runtime.GOOS != "darwin" {
 		arch := ARM64()
 		arch.Disassembler = []string{"llvm-objdump-15"}
+		arch.BuildTags = "//go:build !noasm && darwin && arm64\n"
 		arch.ClangFlags = []string{"--target=aarch64-apple-darwin", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"}
 		return arch
 	}
