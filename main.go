@@ -15,27 +15,28 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
+	"path/filepath"
 
+	"github.com/kelindar/gocc/internal/asm"
+	"github.com/kelindar/gocc/internal/cc"
 	"github.com/kelindar/gocc/internal/config"
 	"github.com/spf13/cobra"
 )
 
-// runCommand runs a command and extract its output.
-func runCommand(name string, arg ...string) (string, error) {
-	cmd := exec.Command(name, arg...)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		if output != nil {
-			return "", errors.New(string(output))
-		} else {
-			return "", err
-		}
+func init() {
+	command.PersistentFlags().StringP("output", "o", "", "output directory of generated files")
+	command.PersistentFlags().StringSliceP("machine-option", "m", nil, "machine option for clang")
+	command.PersistentFlags().IntP("optimize-level", "O", 0, "optimization level for clang")
+	command.PersistentFlags().StringP("arch", "a", "amd64", "target architecture to use")
+}
+
+func main() {
+	if err := command.Execute(); err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
-	return string(output), nil
 }
 
 var command = &cobra.Command{
@@ -67,7 +68,12 @@ var command = &cobra.Command{
 
 		optimizeLevel, _ := cmd.PersistentFlags().GetInt("optimize-level")
 		options = append(options, fmt.Sprintf("-O%d", optimizeLevel))
-		file := NewTranslateUnit(arch, args[0], output, options...)
+		file, err := NewTranslator(arch, args[0], output, options...)
+		if err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+
 		if err := file.Translate(); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -75,16 +81,73 @@ var command = &cobra.Command{
 	},
 }
 
-func init() {
-	command.PersistentFlags().StringP("output", "o", "", "output directory of generated files")
-	command.PersistentFlags().StringSliceP("machine-option", "m", nil, "machine option for clang")
-	command.PersistentFlags().IntP("optimize-level", "O", 0, "optimization level for clang")
-	command.PersistentFlags().StringP("arch", "a", "amd64", "target architecture to use")
+// Translator translates a C file to Go assembly
+type Translator struct {
+	Arch       *config.Arch
+	Clang      *cc.Compiler
+	ObjDump    *cc.Disassembler
+	Source     string
+	Assembly   string
+	Object     string
+	GoAssembly string
+	Go         string
+	Package    string
+	Options    []string
 }
 
-func main() {
-	if err := command.Execute(); err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+func NewTranslator(arch *config.Arch, source string, outputDir string, options ...string) (*Translator, error) {
+	sourceExt := filepath.Ext(source)
+	noExtSourcePath := source[:len(source)-len(sourceExt)]
+	noExtSourceBase := filepath.Base(noExtSourcePath)
+	clang, err := cc.NewCompiler(arch)
+	if err != nil {
+		return nil, err
 	}
+
+	objdump, err := cc.NewDisassembler(arch)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Translator{
+		Arch:       arch,
+		Clang:      clang,
+		ObjDump:    objdump,
+		Source:     source,
+		Assembly:   fmt.Sprintf("%s.s", noExtSourcePath),
+		Object:     fmt.Sprintf("%s.o", noExtSourcePath),
+		GoAssembly: filepath.Join(outputDir, fmt.Sprintf("%s.s", noExtSourceBase)),
+		Go:         filepath.Join(outputDir, fmt.Sprintf("%s.go", noExtSourceBase)),
+		Package:    filepath.Base(outputDir),
+		Options:    options,
+	}, nil
+}
+
+// Translate translates the source file to Go assembly
+func (t *Translator) Translate() error {
+	functions, err := cc.Parse(t.Source)
+	if err != nil {
+		return err
+	}
+
+	// Generate the Go stubs for the functions
+	if err := asm.GenerateGoStubs(t.Arch, t.Package, t.Go, functions); err != nil {
+		return err
+	}
+
+	// Compile the source file to assembly
+	if err := t.Clang.Compile(t.Source, t.Assembly, t.Object, t.Options...); err != nil {
+		return err
+	}
+
+	// Disassemble the object file and extract machine code
+	assembly, err := t.ObjDump.Disassemble(t.Assembly, t.Object)
+	if err != nil {
+		return err
+	}
+
+	for i, v := range assembly {
+		functions[i].Lines = v.Lines
+	}
+	return asm.Generate(t.Arch, t.GoAssembly, functions)
 }

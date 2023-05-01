@@ -55,18 +55,19 @@ func For(arch string) (*Arch, error) {
 // AMD64 returns a configuration for AMD64 architecture
 func AMD64() *Arch {
 	return &Arch{
-		Name:         "amd64",
-		Attribute:    regexp.MustCompile(`^\s+\..+$`),
-		Function:     regexp.MustCompile(`^\w+:.*$`),
-		Label:        regexp.MustCompile(`^\.[A-Z0-9]+_\d+:.*$`),
-		Code:         regexp.MustCompile(`^\s+\w+.+$`),
-		Symbol:       regexp.MustCompile(`^\w+\s+<\w+>:$`),
-		Data:         regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
-		Comment:      regexp.MustCompile(`^\s*#.*$`),
-		Registers:    []string{"DI", "SI", "DX", "CX"},
-		BuildTags:    "//go:build !noasm && amd64\n",
-		CommentCh:    "#",
-		CallOp:       "MOVQ",
+		Name:      "amd64",
+		Attribute: regexp.MustCompile(`^\s+\..+$`),
+		Function:  regexp.MustCompile(`^\w+:.*$`),
+		Label:     regexp.MustCompile(`^\.[A-Z0-9]+_\d+:.*$`),
+		Code:      regexp.MustCompile(`^\s+\w+.+$`),
+		Symbol:    regexp.MustCompile(`^\w+\s+<\w+>:$`),
+		Data:      regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
+		Comment:   regexp.MustCompile(`^\s*#.*$`),
+		Registers: []string{"DI", "SI", "DX", "CX"},
+		BuildTags: "//go:build !noasm && amd64\n",
+		CommentCh: "#",
+		CallOp:    "MOVQ",
+		//Disassembler: []string{"objdump", "--insn-width", "16"},
 		Disassembler: []string{"objdump", "--insn-width", "16"},
 	}
 }
@@ -74,20 +75,20 @@ func AMD64() *Arch {
 // ARM64 returns a configuration for ARM64 architecture
 func ARM64() *Arch {
 	return &Arch{
-		Name:         "arm64",
-		Attribute:    regexp.MustCompile(`^\s+\..+$`),
-		Function:     regexp.MustCompile(`^\w+:.*$`),
-		Label:        regexp.MustCompile(`^.[A-Z0-9]+_\d+:.*$`),
-		Code:         regexp.MustCompile(`^\s+\w+.+$`),
-		Symbol:       regexp.MustCompile(`^\w+\s+<\w+>:$`),
-		Data:         regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
-		Comment:      regexp.MustCompile(`^\s*//.*$`),
-		Registers:    []string{"R0", "R1", "R2", "R3"},
-		BuildTags:    "//go:build !noasm && !darwin && arm64\n",
-		CommentCh:    "//",
-		CallOp:       "MOVD",
-		Disassembler: []string{"aarch64-linux-gnu-objdump"}, // llvm-objdump also works
-		ClangFlags:   []string{"--target=aarch64-linux-gnu", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"},
+		Name:      "arm64",
+		Attribute: regexp.MustCompile(`^\s+\..+$`),
+		Function:  regexp.MustCompile(`^\w+:.*$`),
+		Label:     regexp.MustCompile(`^.[A-Z0-9]+_\d+:.*$`),
+		Code:      regexp.MustCompile(`^\s+\w+.+$`),
+		Symbol:    regexp.MustCompile(`^\w+\s+<\w+>:$`),
+		Data:      regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
+		Comment:   regexp.MustCompile(`^\s*//.*$`),
+		Registers: []string{"R0", "R1", "R2", "R3"},
+		BuildTags: "//go:build !noasm && !darwin && arm64\n",
+		CommentCh: "//",
+		CallOp:    "MOVD",
+		//Disassembler: []string{"aarch64-linux-gnu-objdump"}, // llvm-objdump also works
+		ClangFlags: []string{"--target=aarch64-linux-gnu", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"},
 	}
 }
 
@@ -103,18 +104,18 @@ func Apple() *Arch {
 	}
 
 	return &Arch{
-		Name:         "arm64",
-		Attribute:    regexp.MustCompile(`^\s+\..+$`),
-		Function:     regexp.MustCompile(`^\w+:.*$`),
-		Label:        regexp.MustCompile(`^[A-Z0-9]+_\d+:.*$`),
-		Code:         regexp.MustCompile(`^\s+\w+.+$`),
-		Symbol:       regexp.MustCompile(`^\w+\s+<\w+>:$`),
-		Data:         regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
-		Comment:      regexp.MustCompile(`^\s*;.*$`),
-		Registers:    []string{"R0", "R1", "R2", "R3"},
-		BuildTags:    "//go:build !noasm && darwin && arm64\n",
-		CommentCh:    ";",
-		CallOp:       "MOVD",
-		Disassembler: []string{"objdump"},
+		Name:      "arm64",
+		Attribute: regexp.MustCompile(`^\s+\..+$`),
+		Function:  regexp.MustCompile(`^\w+:.*$`),
+		Label:     regexp.MustCompile(`^[A-Z0-9]+_\d+:.*$`),
+		Code:      regexp.MustCompile(`^\s+\w+.+$`),
+		Symbol:    regexp.MustCompile(`^\w+\s+<\w+>:$`),
+		Data:      regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
+		Comment:   regexp.MustCompile(`^\s*;.*$`),
+		Registers: []string{"R0", "R1", "R2", "R3"},
+		BuildTags: "//go:build !noasm && darwin && arm64\n",
+		CommentCh: ";",
+		CallOp:    "MOVD",
+		//Disassembler: []string{"objdump"},
 	}
 }

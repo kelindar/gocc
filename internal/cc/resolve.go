@@ -19,14 +19,6 @@ import (
 	"os/exec"
 )
 
-// Disassembler resolves disassembler to use.
-func Disassembler() (string, error) {
-	return find([]string{
-		"objdump", "llvm-objdump", "llvm-objdump-17", "llvm-objdump-16",
-		"llvm-objdump-15", "llvm-objdump-14", "llvm-objdump-13",
-	})
-}
-
 // find looks for a particular executable in the system
 func find(versions []string) (string, error) {
 	for _, v := range versions {
