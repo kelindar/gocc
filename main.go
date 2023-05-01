@@ -125,6 +125,7 @@ func NewTranslator(arch *config.Arch, source string, outputDir string, options .
 
 // Translate translates the source file to Go assembly
 func (t *Translator) Translate() error {
+	defer t.Cleanup()
 	functions, err := cc.Parse(t.Source)
 	if err != nil {
 		return err
@@ -146,8 +147,15 @@ func (t *Translator) Translate() error {
 		return err
 	}
 
+	// Map the machine code to the assembly one
 	for i, v := range assembly {
 		functions[i].Lines = v.Lines
 	}
 	return asm.Generate(t.Arch, t.GoAssembly, functions)
+}
+
+// Cleanup cleans up the temporary files
+func (t *Translator) Cleanup() {
+	_ = os.Remove(t.Assembly)
+	_ = os.Remove(t.Object)
 }
