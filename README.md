@@ -5,7 +5,7 @@
 <a href="https://opensource.org/license/apache-2-0/"><img src="https://img.shields.io/badge/License-Apache-blue.svg" alt="License"></a>
 </p>
 
-# GOCC: Compile C to Go Assembly
+## GOCC: Compile C to Go Assembly
 
 This utility transpiles C code to Go assembly. It uses the LLVM toolchain to compile C code to assembly and machine code and generates Go assembly from it, as well as the corresponding Go stubs. This is useful for certain features such as using intrinsics, which are not supported by the Go ecosystem. The example folder includes matrix multiplication using intrinsics compiled to ARM Linux, x86_x64 and Apple Silicon.
 
