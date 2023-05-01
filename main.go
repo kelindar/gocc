@@ -19,34 +19,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/kelindar/gocc/internal/config"
 	"github.com/spf13/cobra"
 )
-
-// listIncludePaths lists include paths used by clang.
-func listIncludePaths() ([]string, error) {
-	out, err := runCommand("bash", "-c", "echo | gcc -xc -E -v -")
-	if err != nil {
-		return nil, err
-	}
-
-	var start bool
-	var paths []string
-	for _, line := range strings.Split(out, "\n") {
-		if strings.HasPrefix(line, "#include <...> search starts here:") {
-			start = true
-		} else if strings.HasPrefix(line, "End of search list.") {
-			start = false
-		} else if start {
-			path := strings.TrimSpace(line)
-			paths = append(paths, path)
-		}
-	}
-
-	return paths, nil
-}
 
 // runCommand runs a command and extract its output.
 func runCommand(name string, arg ...string) (string, error) {

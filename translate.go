@@ -17,19 +17,13 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"reflect"
-	"sort"
 	"strings"
 
-	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/kelindar/gocc/internal/asm"
+	"github.com/kelindar/gocc/internal/cc"
 	"github.com/kelindar/gocc/internal/config"
-	"modernc.org/cc/v3"
 )
-
-var supportedTypes = mapset.NewSet("int64_t", "uint64_t", "float", "unsignedlonglong", "longlong", "long", "unsignedlong", "int", "unsignedint")
 
 type TranslateUnit struct {
 	Arch       *config.Arch
@@ -57,49 +51,6 @@ func NewTranslateUnit(arch *config.Arch, source string, outputDir string, option
 		Package:    filepath.Base(outputDir),
 		Options:    options,
 	}
-}
-
-// parseSource parse C source file and extract functions declarations.
-func (t *TranslateUnit) parseSource() ([]asm.Function, error) {
-	includePaths, err := listIncludePaths()
-	if err != nil {
-		return nil, err
-	}
-
-	source, err := t.redactSource(t.Source)
-	if err != nil {
-		return nil, err
-	}
-
-	ast, err := cc.Parse(&cc.Config{}, nil, includePaths,
-		[]cc.Source{{Name: t.Source, Value: source}})
-	if err != nil {
-		return nil, err
-	}
-
-	var functions []asm.Function
-	for _, nodes := range ast.Scope {
-		if len(nodes) != 1 || nodes[0].Position().Filename != t.Source {
-			continue
-		}
-		node := nodes[0]
-		if declarator, ok := node.(*cc.Declarator); ok {
-			funcIdent := declarator.DirectDeclarator
-			if funcIdent.Case != cc.DirectDeclaratorFuncParam {
-				continue
-			}
-
-			if function, err := t.convertFunction(funcIdent); err != nil {
-				return nil, err
-			} else {
-				functions = append(functions, function)
-			}
-		}
-	}
-	sort.Slice(functions, func(i, j int) bool {
-		return functions[i].Position < functions[j].Position
-	})
-	return functions, nil
 }
 
 func (t *TranslateUnit) generateGoStubs(functions []asm.Function) error {
@@ -130,27 +81,16 @@ func (t *TranslateUnit) generateGoStubs(functions []asm.Function) error {
 
 // compile compiles the C source file to assembly and then to object.
 func (t *TranslateUnit) compile(args ...string) error {
-	args = append(args, "-mno-red-zone", "-mstackrealign", "-mllvm", "-inline-threshold=1000",
-		"-fno-asynchronous-unwind-tables", "-fno-exceptions", "-fno-rtti", "-ffast-math")
-	args = append(args, t.Arch.ClangFlags...)
-
-	clang, err := resolveClang()
+	clang, err := cc.NewCompiler(t.Arch)
 	if err != nil {
 		return err
 	}
 
-	// Compile to assembly first
-	if _, err := runCommand(clang, append([]string{"-S", "-c", t.Source, "-o", t.Assembly}, args...)...); err != nil {
-		return err
-	}
-
-	// Use clang to compile to object
-	_, err = runCommand(clang, append([]string{"-c", t.Assembly, "-o", t.Object}, args...)...)
-	return err
+	return clang.Compile(t.Source, t.Assembly, t.Object, args...)
 }
 
 func (t *TranslateUnit) Translate() error {
-	functions, err := t.parseSource()
+	functions, err := cc.Parse(t.Source)
 	if err != nil {
 		return err
 	}
@@ -181,129 +121,4 @@ func (t *TranslateUnit) Translate() error {
 		functions[i].Lines = v.Lines
 	}
 	return asm.Generate(t.Arch, t.GoAssembly, functions)
-}
-
-// redactSource removes code from the source and only leaves function declarations.
-// This is done to avoid parsing errors when the source is not compatible with the compiler.
-func (t *TranslateUnit) redactSource(path string) (string, error) {
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-
-	var src strings.Builder
-	src.WriteString("#define __STDC_HOSTED__ 1\n")
-	src.WriteString("#define uint64_t unsigned long long\n")
-	src.WriteString("#define uint32_t unsigned int\n")
-	src.WriteString("#define int64_t long long\n")
-	src.WriteString("#define int32_t int\n")
-
-	var clauseCount int
-	for _, line := range strings.Split(string(bytes), "\n") {
-		switch {
-		case strings.HasPrefix(line, "#include"):
-			continue
-		case strings.HasPrefix(line, "//"):
-			continue
-		case strings.Contains(line, "{"):
-			if clauseCount == 0 {
-				src.WriteString(line[:strings.Index(line, "{")+1])
-				src.WriteString("\n // removed for compatibility\n")
-			}
-			clauseCount++
-		case strings.Contains(line, "}"):
-			clauseCount--
-			if clauseCount == 0 {
-				src.WriteString(line[strings.Index(line, "}"):])
-				src.WriteRune('\n')
-			}
-		default:
-			continue
-		}
-	}
-
-	return src.String(), nil
-}
-
-// convertFunction extracts the function definition from cc.DirectDeclarator.
-func (t *TranslateUnit) convertFunction(declarator *cc.DirectDeclarator) (asm.Function, error) {
-	params, err := t.convertFunctionParameters(declarator.ParameterTypeList.ParameterList)
-	if err != nil {
-		return asm.Function{}, err
-	}
-
-	return asm.Function{
-		Name:       declarator.DirectDeclarator.Token.String(),
-		Position:   declarator.Position().Line,
-		Parameters: params,
-	}, nil
-}
-
-// convertFunctionParameters extracts function parameters from cc.ParameterList.
-func (t *TranslateUnit) convertFunctionParameters(params *cc.ParameterList) ([]asm.Param, error) {
-	declaration := params.ParameterDeclaration
-	isPointer := declaration.Declarator.Pointer != nil
-	paramName := declaration.Declarator.DirectDeclarator.Token.Value
-	paramType := typeOf(declaration.DeclarationSpecifiers)
-
-	if !isPointer && !supportedTypes.Contains(paramType) {
-		position := declaration.Position()
-		return nil, fmt.Errorf("gocc: [%v:%v:%v] unsupported type: %v\n",
-			position.Filename, position.Line+t.Offset, position.Column, paramType)
-	}
-
-	paramNames := []asm.Param{{
-		Name:      paramName.String(),
-		Type:      paramType,
-		IsPointer: isPointer,
-	}}
-
-	if params.ParameterList != nil {
-		if nextParamNames, err := t.convertFunctionParameters(params.ParameterList); err != nil {
-			return nil, err
-		} else {
-			paramNames = append(paramNames, nextParamNames...)
-		}
-	}
-	return paramNames, nil
-}
-
-// resolveClang resolves clang compiler to use.
-func resolveClang() (string, error) {
-	clangVersions := []string{"clang", "clang-17", "clang-16", "clang-15", "clang-14", "clang-13", "clang-12", "clang-11", "clang-10"}
-	for _, clang := range clangVersions {
-		if _, err := exec.LookPath(clang); err == nil {
-			return clang, nil
-		}
-	}
-	return "", fmt.Errorf(`clang compiler not found, install using \n bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"`)
-}
-
-// typeOf returns the type of the given value, recursively.
-func typeOf(v any) string {
-	if rv := reflect.ValueOf(v); rv.Kind() == reflect.Ptr && rv.IsNil() {
-		return ""
-	}
-
-	switch s := v.(type) {
-	case *cc.TypeQualifier:
-		return s.Token.String()
-	case *cc.TypeSpecifier:
-		return s.Token.String()
-	case *cc.DeclarationSpecifiers:
-		var result string
-		switch s.Case {
-		case cc.DeclarationSpecifiersTypeQual:
-			result += typeOf(s.TypeSpecifier)
-			result += typeOf(s.DeclarationSpecifiers)
-		case cc.DeclarationSpecifiersTypeSpec:
-			result += typeOf(s.TypeSpecifier)
-			result += typeOf(s.DeclarationSpecifiers)
-		default:
-			panic(fmt.Sprintf("gocc: unexpected specifiers case: %v", s.Case))
-		}
-		return result
-	default:
-		panic(fmt.Sprintf("gocc: unexpected specifier type: %T", v))
-	}
 }
