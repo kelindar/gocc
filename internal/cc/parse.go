@@ -39,7 +39,7 @@ func Parse(path string) ([]asm.Function, error) {
 	ast, err := cc.Parse(&cc.Config{}, nil, nil,
 		[]cc.Source{{Name: path, Value: source}})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gocc: %w", err)
 	}
 
 	var functions []asm.Function
@@ -86,7 +86,7 @@ func redactSource(path string) (string, error) {
 	var clauseCount int
 	for _, line := range strings.Split(string(bytes), "\n") {
 		switch {
-		case strings.HasPrefix(line, "#include"):
+		case strings.HasPrefix(line, "#"):
 			continue
 		case strings.HasPrefix(line, "//"):
 			continue
