@@ -47,50 +47,87 @@ func For(arch string) (*Arch, error) {
 		return ARM64(), nil
 	case "apple":
 		return Apple(), nil
+	case "neon":
+		return Neon(), nil
+	case "avx2":
+		return Avx2(), nil
+	case "avx512":
+		return Avx512(), nil
 	default:
 		return nil, fmt.Errorf("unsupported architecture: %s", arch)
 	}
 }
 
+// ------------------------------------- AMD64 -------------------------------------
+
 // AMD64 returns a configuration for AMD64 architecture
 func AMD64() *Arch {
 	return &Arch{
-		Name:      "amd64",
-		Attribute: regexp.MustCompile(`^\s+\..+$`),
-		Function:  regexp.MustCompile(`^\w+:.*$`),
-		Label:     regexp.MustCompile(`^\.[A-Z0-9]+_\d+:.*$`),
-		Code:      regexp.MustCompile(`^\s+\w+.+$`),
-		Symbol:    regexp.MustCompile(`^\w+\s+<\w+>:$`),
-		Data:      regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
-		Comment:   regexp.MustCompile(`^\s*#.*$`),
-		Registers: []string{"DI", "SI", "DX", "CX"},
-		BuildTags: "//go:build !noasm && amd64\n",
-		CommentCh: "#",
-		CallOp:    "MOVQ",
-		//Disassembler: []string{"objdump", "--insn-width", "16"},
+		Name:         "amd64",
+		Attribute:    regexp.MustCompile(`^\s+\..+$`),
+		Function:     regexp.MustCompile(`^\w+:.*$`),
+		Label:        regexp.MustCompile(`^\.[A-Z0-9]+_\d+:.*$`),
+		Code:         regexp.MustCompile(`^\s+\w+.+$`),
+		Symbol:       regexp.MustCompile(`^\w+\s+<\w+>:$`),
+		Data:         regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
+		Comment:      regexp.MustCompile(`^\s*#.*$`),
+		Registers:    []string{"DI", "SI", "DX", "CX"},
+		BuildTags:    "//go:build !noasm && amd64\n",
+		CommentCh:    "#",
+		CallOp:       "MOVQ",
 		Disassembler: []string{"objdump", "--insn-width", "16"},
 	}
 }
 
+// Avx2 returns a configuration for AMD64 architecture with AVX2 support
+func Avx2() *Arch {
+	arch := AMD64()
+	arch.ClangFlags = append(arch.ClangFlags, "-masm=intel", "-mavx2", "-mfma")
+	return arch
+}
+
+// Avx512 returns a configuration for AMD64 architecture with AVX512 support
+func Avx512() *Arch {
+	arch := AMD64()
+	arch.ClangFlags = append(arch.ClangFlags, "-masm=intel", "-mavx", "-mfma", "-mavx512f", "-mavx512dq")
+	return arch
+}
+
+// ------------------------------------- Linux ARM64 -------------------------------------
+
 // ARM64 returns a configuration for ARM64 architecture
 func ARM64() *Arch {
 	return &Arch{
-		Name:      "arm64",
-		Attribute: regexp.MustCompile(`^\s+\..+$`),
-		Function:  regexp.MustCompile(`^\w+:.*$`),
-		Label:     regexp.MustCompile(`^.[A-Z0-9]+_\d+:.*$`),
-		Code:      regexp.MustCompile(`^\s+\w+.+$`),
-		Symbol:    regexp.MustCompile(`^\w+\s+<\w+>:$`),
-		Data:      regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
-		Comment:   regexp.MustCompile(`^\s*//.*$`),
-		Registers: []string{"R0", "R1", "R2", "R3"},
-		BuildTags: "//go:build !noasm && !darwin && arm64\n",
-		CommentCh: "//",
-		CallOp:    "MOVD",
-		//Disassembler: []string{"aarch64-linux-gnu-objdump"}, // llvm-objdump also works
-		ClangFlags: []string{"--target=aarch64-linux-gnu", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"},
+		Name:       "arm64",
+		Attribute:  regexp.MustCompile(`^\s+\..+$`),
+		Function:   regexp.MustCompile(`^\w+:.*$`),
+		Label:      regexp.MustCompile(`^.[A-Z0-9]+_\d+:.*$`),
+		Code:       regexp.MustCompile(`^\s+\w+.+$`),
+		Symbol:     regexp.MustCompile(`^\w+\s+<\w+>:$`),
+		Data:       regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
+		Comment:    regexp.MustCompile(`^\s*//.*$`),
+		Registers:  []string{"R0", "R1", "R2", "R3"},
+		BuildTags:  "//go:build !noasm && !darwin && arm64\n",
+		CommentCh:  "//",
+		CallOp:     "MOVD",
+		ClangFlags: []string{"--target=aarch64-linux-gnu"},
 	}
 }
+
+// Neon returns a configuration for ARM64 architecture with NEON support
+func Neon() *Arch {
+	arch := ARM64()
+	arch.ClangFlags = append(arch.ClangFlags, "-mfpu=neon", "-mfloat-abi=hard")
+	return arch
+}
+
+func SVE() *Arch {
+	arch := ARM64()
+	arch.ClangFlags = append(arch.ClangFlags, "-mfpu=sve", "-mfloat-abi=hard")
+	return arch
+}
+
+// ------------------------------------- Apple ARM64 -------------------------------------
 
 // Apple returns a configuration for ARM64 architecture. On my M1 mac, supported features are:
 // AESARM, ASIMD, ASIMDDP, ASIMDHP, ASIMDRDM, ATOMICS, CRC32, DCPOP, FCMA, FP, FPHP, GPA, JSCVT, LRCPC, PMULL, SHA1, SHA2, SHA3, SHA512
@@ -99,7 +136,7 @@ func Apple() *Arch {
 		arch := ARM64()
 		arch.Disassembler = []string{"llvm-objdump-15"}
 		arch.BuildTags = "//go:build !noasm && darwin && arm64\n"
-		arch.ClangFlags = []string{"--target=aarch64-apple-darwin"}
+		arch.ClangFlags = []string{"--target=aarch64-apple-darwin", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"}
 		return arch
 	}
 
@@ -116,6 +153,5 @@ func Apple() *Arch {
 		BuildTags: "//go:build !noasm && darwin && arm64\n",
 		CommentCh: ";",
 		CallOp:    "MOVD",
-		//Disassembler: []string{"objdump"},
 	}
 }

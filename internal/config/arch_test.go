@@ -31,3 +31,27 @@ func TestAMD64(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, cfg.BuildTags, "amd64")
 }
+
+func TestApple(t *testing.T) {
+	cfg, err := For("apple")
+	assert.NoError(t, err)
+	assert.Contains(t, cfg.BuildTags, "arm64")
+}
+
+func TestNeon(t *testing.T) {
+	cfg, err := For("neon")
+	assert.NoError(t, err)
+	assert.Contains(t, cfg.BuildTags, "arm64")
+}
+
+func TestAvx2(t *testing.T) {
+	cfg, err := For("avx2")
+	assert.NoError(t, err)
+	assert.Contains(t, cfg.BuildTags, "amd64")
+}
+
+func TestAvx512(t *testing.T) {
+	cfg, err := For("avx512")
+	assert.NoError(t, err)
+	assert.Contains(t, cfg.BuildTags, "amd64")
+}
