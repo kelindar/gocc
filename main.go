@@ -30,6 +30,7 @@ func init() {
 	command.PersistentFlags().StringSliceP("machine-option", "m", nil, "machine option for clang")
 	command.PersistentFlags().IntP("optimize-level", "O", 0, "optimization level for clang")
 	command.PersistentFlags().StringP("arch", "a", "amd64", "target architecture to use")
+	command.PersistentFlags().StringP("package", "p", "", "go package name to use for the stubs")
 }
 
 func main() {
@@ -67,8 +68,9 @@ var command = &cobra.Command{
 		}
 
 		optimizeLevel, _ := cmd.PersistentFlags().GetInt("optimize-level")
+		packageName, _ := cmd.PersistentFlags().GetString("package")
 		options = append(options, fmt.Sprintf("-O%d", optimizeLevel))
-		file, err := NewTranslator(arch, args[0], output, options...)
+		file, err := NewTranslator(arch, args[0], output, packageName, options...)
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -95,7 +97,7 @@ type Translator struct {
 	Options    []string
 }
 
-func NewTranslator(arch *config.Arch, source string, outputDir string, options ...string) (*Translator, error) {
+func NewTranslator(arch *config.Arch, source, outputDir, packageName string, options ...string) (*Translator, error) {
 	sourceExt := filepath.Ext(source)
 	noExtSourcePath := source[:len(source)-len(sourceExt)]
 	noExtSourceBase := filepath.Base(noExtSourcePath)
@@ -109,6 +111,11 @@ func NewTranslator(arch *config.Arch, source string, outputDir string, options .
 		return nil, err
 	}
 
+	// If package name is not provided, use the directory name of the output
+	if packageName == "" {
+		filepath.Base(outputDir)
+	}
+
 	return &Translator{
 		Arch:       arch,
 		Clang:      clang,
@@ -118,7 +125,7 @@ func NewTranslator(arch *config.Arch, source string, outputDir string, options .
 		Object:     fmt.Sprintf("%s.o", noExtSourcePath),
 		GoAssembly: filepath.Join(outputDir, fmt.Sprintf("%s.s", noExtSourceBase)),
 		Go:         filepath.Join(outputDir, fmt.Sprintf("%s.go", noExtSourceBase)),
-		Package:    filepath.Base(outputDir),
+		Package:    packageName,
 		Options:    options,
 	}, nil
 }
