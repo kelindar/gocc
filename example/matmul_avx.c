@@ -22,7 +22,7 @@ void f32_axpy(const float *x, float *y, const uint64_t size, const float alpha) 
     }
 }
 
-void f32_matmul(float *dst, float *m, float *n, uint64_t dims) {
+/*void f32_matmul(float *dst, float *m, float *n, uint64_t dims) {
     uint64_t mr = dims & 0xFFFF;
     uint64_t mc = (dims >> 16) & 0xFFFF;
     uint64_t nr = (dims >> 32) & 0xFFFF;
@@ -31,6 +31,36 @@ void f32_matmul(float *dst, float *m, float *n, uint64_t dims) {
     for (uint64_t i = 0; i < mr; i++) {
         for (uint64_t k = 0; k < mc; k++) {
             f32_axpy(n + k*nc, dst + i*nc, nc, m[i*mc+k]);
+        }
+    }
+}*/
+
+void f32_matmul(float *dst, float *m, float *n, uint64_t dims) {
+    uint64_t mr = dims & 0xFFFF;
+    uint64_t mc = (dims >> 16) & 0xFFFF;
+    uint64_t nr = (dims >> 32) & 0xFFFF;
+    uint64_t nc = (dims >> 48) & 0xFFFF;
+
+    for (uint64_t i = 0; i < mr; i++) {
+        for (uint64_t j = 0; j < nc; j++) {
+            float result = 0;
+            uint64_t k;
+            for (k = 0; k + 7 < mc; k += 8) {
+                __m256 m_vec = _mm256_loadu_ps(&m[i * mc + k]);
+                __m256 n_vec = _mm256_loadu_ps(&n[k * nc + j]);
+                __m256 dp_vec = _mm256_dp_ps(m_vec, n_vec, 0xFF);
+                
+                float dp_result[4];
+                _mm256_storeu_ps(dp_result, dp_vec);
+                result += dp_result[0] + dp_result[2];
+            }
+
+            // Handle the remaining elements
+            for (; k < mc; k++) {
+                result += m[i * mc + k] * n[k * nc + j];
+            }
+
+            dst[i * nc + j] = result;
         }
     }
 }

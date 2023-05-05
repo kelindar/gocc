@@ -40,19 +40,19 @@ func BenchmarkAXPY(b *testing.B) {
 
 /*
 cpu: 13th Gen Intel(R) Core(TM) i7-13700K
-BenchmarkMatmul/4x4-std-24         	28915801	        41.79 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMatmul/4x4-asm-24         	48979990	        24.82 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMatmul/8x8-std-24         	 5381164	       223.7 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMatmul/8x8-asm-24         	38095237	        31.71 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMatmul/16x16-std-24       	 1000000	      1206 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMatmul/16x16-asm-24       	 3680982	       329.3 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMatmul/32x32-std-24       	  155844	      7597 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMatmul/32x32-asm-24       	  648651	      1802 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMatmul/64x64-std-24       	   15513	     77741 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMatmul/64x64-asm-24       	  143712	      8420 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMatmul/4x4-std-24         	24242570	        49.69 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMatmul/4x4-asm-24         	26667140	        45.19 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMatmul/8x8-std-24         	 4545457	       265.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMatmul/8x8-asm-24         	21428494	        50.40 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMatmul/16x16-std-24       	 1000000	      1267 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMatmul/16x16-asm-24       	 7017567	       165.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMatmul/32x32-std-24       	  129031	      9893 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMatmul/32x32-asm-24       	 1854714	       623.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMatmul/64x64-std-24       	   18644	     64486 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMatmul/64x64-asm-24       	  510646	      2408 ns/op	       0 B/op	       0 allocs/op
 */
 func BenchmarkMatmul(b *testing.B) {
-	for _, size := range []int{4, 8, 16, 32, 64} {
+	for _, size := range []int{4, 8, 16, 32, 64, 128, 256, 512} {
 		m := newTestMatrix(size, size)
 		n := newTestMatrix(size, size)
 		o := newTestMatrix(size, size)

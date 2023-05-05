@@ -1,5 +1,5 @@
 #!/bin/bash
 
-go run ../. matmul_avx.c --arch avx2 -O3 -o simd
-go run ../. matmul_neon.c --arch neon -O3 -o simd
-go run ../. matmul_apple.c --arch apple -O3 -o simd
+go run ../. matmul_avx.c --arch avx2 -O3 -o simd --package simd
+go run ../. matmul_neon.c --arch neon -O3 -o simd --package simd
+go run ../. matmul_apple.c --arch apple -O3 -o simd --package simd
