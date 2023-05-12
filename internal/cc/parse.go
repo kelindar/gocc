@@ -27,7 +27,18 @@ import (
 	"modernc.org/cc/v3"
 )
 
-var supportedTypes = mapset.NewSet("int64_t", "uint64_t", "float", "unsignedlonglong", "longlong", "long", "unsignedlong", "int", "unsignedint")
+var supportedTypes = mapset.NewSet(
+	"int64_t", "uint64_t",
+	"int32_t", "uint32_t",
+	"int16_t", "uint16_t",
+	"int8_t", "uint8_t",
+	"float", "double",
+	"longlong", "unsignedlonglong",
+	"long", "unsignedlong",
+	"int", "unsignedint",
+	"short", "unsignedshort",
+	"char", "unsignedchar",
+)
 
 // Parse parse C source file and extracts functions declarations.
 func Parse(path string) ([]asm.Function, error) {
@@ -80,8 +91,12 @@ func redactSource(path string) (string, error) {
 	src.WriteString("#define __STDC_HOSTED__ 1\n")
 	src.WriteString("#define uint64_t unsigned long long\n")
 	src.WriteString("#define uint32_t unsigned int\n")
+	src.WriteString("#define uint16_t unsigned short\n")
+	src.WriteString("#define uint8_t unsigned char\n")
 	src.WriteString("#define int64_t long long\n")
 	src.WriteString("#define int32_t int\n")
+	src.WriteString("#define int16_t short\n")
+	src.WriteString("#define int8_t char\n")
 
 	var clauseCount int
 	for _, line := range strings.Split(string(bytes), "\n") {
