@@ -17,18 +17,12 @@ package cc
 
 import (
 	"errors"
+	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/kelindar/gocc/internal/config"
 )
-
-// findClang resolves clang compiler to use.
-func findClang() (string, error) {
-	return find([]string{
-		"clang", "clang-17", "clang-16", "clang-15", "clang-14",
-		"clang-13", "clang-12", "clang-11", "clang-10",
-	})
-}
 
 // Compiler represents a C/C++ compiler.
 type Compiler struct {
@@ -38,7 +32,7 @@ type Compiler struct {
 
 // NewCompiler creates a new compiler.
 func NewCompiler(arch *config.Arch) (*Compiler, error) {
-	clang, err := findClang()
+	clang, err := config.FindClang()
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +60,10 @@ func (c *Compiler) Compile(source, assembly, object string, args ...string) erro
 }
 
 // runCommand runs a command and extract its output.
-func runCommand(name string, arg ...string) (string, error) {
-	cmd := exec.Command(name, arg...)
+func runCommand(name string, args ...string) (string, error) {
+	cmd := exec.Command(name, args...)
+	fmt.Printf("Running %s %s\n", name, strings.Join(args, " "))
+
 	output, err := cmd.CombinedOutput()
 	if err == nil {
 		return string(output), nil

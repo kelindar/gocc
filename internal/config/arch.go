@@ -134,9 +134,8 @@ func SVE() *Arch {
 func Apple() *Arch {
 	if runtime.GOOS != "darwin" {
 		arch := ARM64()
-		arch.Disassembler = []string{"llvm-objdump-15"}
 		arch.BuildTags = "//go:build !noasm && darwin && arm64\n"
-		arch.ClangFlags = []string{"--target=aarch64-apple-darwin", "-mfpu=neon-vfpv4", "-mfloat-abi=hard"}
+		arch.ClangFlags = []string{"--target=aarch64-apple-darwin", "--sysroot=/usr/osxcross/SDK/MacOSX11.3.sdk/"}
 		return arch
 	}
 
@@ -154,4 +153,24 @@ func Apple() *Arch {
 		CommentCh: ";",
 		CallOp:    "MOVD",
 	}
+}
+
+// ------------------------------------- Toolchain -------------------------------------
+
+// FindClang resolves clang compiler to use.
+func FindClang() (string, error) {
+	return find([]string{
+		"clang-17", "clang-16", "clang-15", "clang-14",
+		"clang-13", "clang-12", "clang-11", "clang-10",
+		"clang",
+	})
+}
+
+// FindObjdump resolves clang disassembler to use.
+func FindObjdump() (string, error) {
+	return find([]string{
+		"llvm-objdump-17", "llvm-objdump-16", "llvm-objdump-15", "llvm-objdump-14",
+		"llvm-objdump-13", "llvm-objdump-12", "llvm-objdump-11", "llvm-objdump-10",
+		"llvm-objdump", "objdump",
+	})
 }

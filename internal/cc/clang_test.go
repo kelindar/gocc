@@ -15,6 +15,8 @@
 package cc
 
 import (
+	"fmt"
+	"os/exec"
 	"runtime"
 	"testing"
 
@@ -38,4 +40,15 @@ func TestCompiler(t *testing.T) {
 	}
 
 	assert.NoError(t, compiler.Compile(testSource, "temp.s", "temp.o"))
+}
+
+// find looks for a particular executable in the system
+func find(versions []string) (string, error) {
+	for _, v := range versions {
+		if _, err := exec.LookPath(v); err == nil {
+			return v, nil
+		}
+	}
+
+	return "", fmt.Errorf("gocc: '%s' executable not found)", versions[0])
 }

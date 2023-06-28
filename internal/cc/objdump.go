@@ -5,22 +5,13 @@ import (
 	"github.com/kelindar/gocc/internal/config"
 )
 
-// findObjdump resolves disassembler to use.
-func findObjdump() (string, error) {
-	return find([]string{
-		"llvm-objdump", "llvm-objdump-17", "llvm-objdump-16",
-		"llvm-objdump-15", "llvm-objdump-14", "llvm-objdump-13",
-		"objdump",
-	})
-}
-
 type Disassembler struct {
 	arch    *config.Arch
 	objdump string
 }
 
 func NewDisassembler(arch *config.Arch) (*Disassembler, error) {
-	objdump, err := findObjdump()
+	objdump, err := config.FindObjdump()
 	if err != nil {
 		return nil, err
 	}
