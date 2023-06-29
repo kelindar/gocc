@@ -25,8 +25,8 @@ import (
 	"github.com/kelindar/gocc/internal/config"
 )
 
-// Translator translates a C file to Go assembly
-type Translator struct {
+// Local translates a C file to Go assembly
+type Local struct {
 	Arch       *config.Arch
 	Clang      *cc.Compiler
 	ObjDump    *cc.Disassembler
@@ -39,8 +39,8 @@ type Translator struct {
 	Options    []string
 }
 
-// NewTranslator creates a new translator
-func NewTranslator(arch *config.Arch, source, outputDir, packageName string, options ...string) (*Translator, error) {
+// NewLocal creates a new translator that uses locally installed toolchain
+func NewLocal(arch *config.Arch, source, outputDir, packageName string, options ...string) (*Local, error) {
 	sourceExt := filepath.Ext(source)
 	noExtSourcePath := source[:len(source)-len(sourceExt)]
 	noExtSourceBase := filepath.Base(noExtSourcePath)
@@ -59,7 +59,7 @@ func NewTranslator(arch *config.Arch, source, outputDir, packageName string, opt
 		filepath.Base(outputDir)
 	}
 
-	return &Translator{
+	return &Local{
 		Arch:       arch,
 		Clang:      clang,
 		ObjDump:    objdump,
@@ -74,7 +74,7 @@ func NewTranslator(arch *config.Arch, source, outputDir, packageName string, opt
 }
 
 // Translate translates the source file to Go assembly
-func (t *Translator) Translate() error {
+func (t *Local) Translate() error {
 	functions, err := cc.Parse(t.Source)
 	if err != nil {
 		return err
@@ -105,8 +105,32 @@ func (t *Translator) Translate() error {
 	return asm.Generate(t.Arch, t.GoAssembly, functions)
 }
 
+// Output returns the output files as a web result
+func (t *Local) Output() (*WebResult, error) {
+	goFile, err := os.ReadFile(t.Go)
+	if err != nil {
+		return nil, err
+	}
+
+	asmFile, err := os.ReadFile(t.GoAssembly)
+	if err != nil {
+		return nil, err
+	}
+
+	return &WebResult{
+		Asm: File{
+			Name: t.GoAssembly,
+			Body: asmFile,
+		},
+		Go: File{
+			Name: t.Go,
+			Body: goFile,
+		},
+	}, nil
+}
+
 // Cleanup cleans up the temporary files
-func (t *Translator) Close() error {
+func (t *Local) Close() error {
 	return errors.Join(
 		os.Remove(t.Assembly),
 		os.Remove(t.Object),

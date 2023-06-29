@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -10,30 +9,6 @@ import (
 	"github.com/kelindar/gocc"
 	"github.com/kelindar/gocc/internal/config"
 )
-
-// File represents a file
-type File struct {
-	Name string `json:"name" uri:"name" binding:"required"`
-	Body []byte `json:"body"`
-}
-
-// Ext returns the extension of the file
-func (f *File) Ext() string {
-	return filepath.Ext(f.Name)
-}
-
-type Result struct {
-	Asm File `json:"asm"`
-	Go  File `json:"go"`
-}
-
-type Request struct {
-	File
-	Arch    string   `uri:"arch" binding:"required"`
-	Level   int      `uri:"level" form:"level"`
-	Package string   `uri:"package" form:"package"`
-	Options []string `uri:"options" form:"options"`
-}
 
 func main() {
 	r := gin.Default()
@@ -51,19 +26,14 @@ func main() {
 
 	// Compile endpoint
 	r.POST("/compile/:arch/:name", func(c *gin.Context) {
-
-		// Read all body
 		body, err := c.GetRawData()
 		if err != nil {
 			c.JSON(http.StatusBadRequest, err.Error())
 			return
 		}
 
-		input := Request{
-			Level: 3,
-			File: File{
-				Body: body,
-			},
+		input := gocc.WebRequest{
+			File: gocc.File{Body: body},
 		}
 
 		if err := c.BindUri(&input); err != nil {
@@ -92,7 +62,7 @@ func main() {
 
 // Translate calls the translator to translate the file and returns a result. It also
 // cleans up the temporary files.
-func translate(req *Request) (*Result, error) {
+func translate(req *gocc.WebRequest) (*gocc.WebResult, error) {
 	arch, err := config.For(req.Arch)
 	if err != nil {
 		return nil, err
@@ -103,8 +73,6 @@ func translate(req *Request) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// Clean up the temporary directory
 	defer os.RemoveAll(tmp)
 
 	// Write the input file
@@ -114,37 +82,19 @@ func translate(req *Request) (*Result, error) {
 	}
 
 	// Create a new translator
-	options := append(req.Options, fmt.Sprintf("-O%d", req.Level))
-	translator, err := gocc.NewTranslator(arch, input, tmp, req.Package, options...)
+	if len(req.Options) == 0 {
+		req.Options = []string{"-O3"}
+	}
+
+	// Create a new translator
+	translator, err := gocc.NewLocal(arch, input, tmp, req.Package, req.Options...)
 	if err != nil {
 		return nil, err
 	}
 
-	// Translate the file
+	// Translate the file and read the output
 	if err := translator.Translate(); err != nil {
 		return nil, err
 	}
-
-	// Read the generated files
-	asm, err := os.ReadFile(translator.GoAssembly)
-	if err != nil {
-		return nil, err
-	}
-
-	goFile, err := os.ReadFile(translator.Go)
-	if err != nil {
-		return nil, err
-	}
-
-	// Return the result
-	return &Result{
-		Asm: File{
-			Name: translator.GoAssembly,
-			Body: asm,
-		},
-		Go: File{
-			Name: translator.Go,
-			Body: goFile,
-		},
-	}, nil
+	return translator.Output()
 }

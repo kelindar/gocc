@@ -29,6 +29,7 @@ func init() {
 	command.PersistentFlags().IntP("optimize-level", "O", 0, "optimization level for clang")
 	command.PersistentFlags().StringP("arch", "a", "amd64", "target architecture to use")
 	command.PersistentFlags().StringP("package", "p", "", "go package name to use for the stubs")
+	command.PersistentFlags().BoolP("local", "l", false, "use local machine for compilation")
 }
 
 func main() {
@@ -46,8 +47,7 @@ var command = &cobra.Command{
 		if output == "" {
 			var err error
 			if output, err = os.Getwd(); err != nil {
-				_, _ = fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				exit(err)
 			}
 		}
 
@@ -59,24 +59,49 @@ var command = &cobra.Command{
 
 		// Load the architecture
 		target, _ := cmd.PersistentFlags().GetString("arch")
-		arch, err := config.For(target)
-		if err != nil {
-			_, _ = fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-
 		optimizeLevel, _ := cmd.PersistentFlags().GetInt("optimize-level")
 		packageName, _ := cmd.PersistentFlags().GetString("package")
 		options = append(options, fmt.Sprintf("-O%d", optimizeLevel))
-		file, err := gocc.NewTranslator(arch, args[0], output, packageName, options...)
-		if err != nil {
-			_, _ = fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
 
-		if err := file.Translate(); err != nil {
-			_, _ = fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+		// Compile locally or remotely
+		local, _ := cmd.PersistentFlags().GetBool("local")
+		switch local {
+		case true:
+			if err := compileLocally(target, args[0], output, packageName, options...); err != nil {
+				exit(err)
+			}
+		default:
+			if err := compileRemotely(target, args[0], output, packageName, options...); err != nil {
+				exit(err)
+			}
 		}
 	},
+}
+
+func compileRemotely(target, source, outputDir, packageName string, options ...string) error {
+	remote, err := gocc.NewRemote(target, source, outputDir, packageName, options...)
+	if err != nil {
+		return err
+	}
+
+	return remote.Translate()
+}
+
+func compileLocally(target, source, outputDir, packageName string, options ...string) error {
+	arch, err := config.For(target)
+	if err != nil {
+		exit(err)
+	}
+
+	local, err := gocc.NewLocal(arch, source, outputDir, packageName, options...)
+	if err != nil {
+		return err
+	}
+
+	return local.Translate()
+}
+
+func exit(err error) {
+	_, _ = fmt.Fprintln(os.Stderr, err)
+	os.Exit(1)
 }
