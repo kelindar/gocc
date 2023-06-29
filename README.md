@@ -11,11 +11,28 @@ This utility transpiles C code to Go assembly. It uses the LLVM toolchain to com
 
 ## Features
 
+- Remote compilation using a docker container with all toolchains (including Apple Silicon) pre-installed.
 - Only requires `clang` and `objdump` to be installed in order to compile.
 - Auto-detects the appropriate version of `clang` and `objdump` to use.
 - Supports cross-compilation.
 - Auto-generates Go stubs for the C functions by parsing C code.
 - Automatically formats go assembly using `asmfmt`.
+
+## Using Remotely (default)
+
+The easiest way to use this tool is to use it remotely. This will use a docker container with all the toolchains pre-installed. This is the default mode of operation and requires no additional setup. The only requirement is to have `go` installed on your machine.
+
+First, we need to install `gocc` command-line tool. This will install the `gocc` command in your `$GOPATH/bin` folder, or `$GOBIN`. Make sure to add it to your `$PATH` variable as well.
+
+```
+go install github.com/kelindar/gocc/cmd/gocc@latest
+```
+
+Next, you can use it to compile your C code to Go assembly. For example, to compile the `matmul_avx.c` file, you can run the following command:
+
+```bash
+gocc matmul_avx.c --arch avx2
+```
 
 ## Setting up locally
 
