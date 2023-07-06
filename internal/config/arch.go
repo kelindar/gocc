@@ -30,6 +30,7 @@ type Arch struct {
 	Symbol       *regexp.Regexp // Parses assembly symbols
 	Data         *regexp.Regexp // Parses assembly data
 	Comment      *regexp.Regexp // Parses assembly comments
+	Const        *regexp.Regexp // Parses assembly constants
 	Registers    []string       // Registers to use
 	BuildTags    string         // Golang build tags
 	CommentCh    string         // Assembly comment character
@@ -71,10 +72,12 @@ func AMD64() *Arch {
 		Symbol:       regexp.MustCompile(`^\w+\s+<\w+>:$`),
 		Data:         regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
 		Comment:      regexp.MustCompile(`^\s*#.*$`),
+		Const:        regexp.MustCompile(`^\s+\.(byte|short|long|int|quad)\s+(-?\d+).+$`),
 		Registers:    []string{"DI", "SI", "DX", "CX"},
 		BuildTags:    "//go:build !noasm && amd64\n",
 		CommentCh:    "#",
 		CallOp:       "MOVQ",
+		ClangFlags:   []string{"--target=x86_64-linux-gnu"},
 		Disassembler: []string{"objdump", "--insn-width", "16"},
 	}
 }
@@ -106,6 +109,7 @@ func ARM64() *Arch {
 		Symbol:     regexp.MustCompile(`^\w+\s+<\w+>:$`),
 		Data:       regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
 		Comment:    regexp.MustCompile(`^\s*//.*$`),
+		Const:      regexp.MustCompile(`^not_implemented$`),
 		Registers:  []string{"R0", "R1", "R2", "R3"},
 		BuildTags:  "//go:build !noasm && !darwin && arm64\n",
 		CommentCh:  "//",

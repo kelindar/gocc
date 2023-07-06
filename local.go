@@ -102,7 +102,7 @@ func (t *Local) Translate() error {
 	}
 
 	_ = t.Close()
-	return asm.Generate(t.Arch, t.GoAssembly, functions)
+	return asm.GenerateFile(t.Arch, t.GoAssembly, functions)
 }
 
 // Output returns the output files as a web result
