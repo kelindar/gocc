@@ -15,7 +15,6 @@
 package asm
 
 import (
-	"encoding/json"
 	"os"
 	"testing"
 
@@ -23,16 +22,31 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGenerate(t *testing.T) {
-	b, err := os.ReadFile("../../fixtures/test_avx.json")
+func TestParseAssembly(t *testing.T) {
+	fn, err := ParseAssembly(config.AMD64(), "../../fixtures/test_avx.s")
+	assert.NoError(t, err)
+	assert.Len(t, fn, 1)
+	assert.Len(t, fn[0].Consts, 1)
+	assert.Len(t, fn[0].Lines, 135)
+	for _, line := range fn[0].Lines {
+		assert.NotEmpty(t, line.Assembly)
+		assert.Empty(t, line.Binary)
+	}
+}
+
+func TestParseObjectDump(t *testing.T) {
+	fn, err := ParseAssembly(config.AMD64(), "../../fixtures/test_avx.s")
 	assert.NoError(t, err)
 
-	var fn []Function
-	assert.NoError(t, json.Unmarshal(b, &fn))
-
-	asm, err := Generate(config.AMD64(), fn)
+	dump, err := os.ReadFile("../../fixtures/test_avx.o.txt")
 	assert.NoError(t, err)
 
-	assert.Contains(t, string(asm), "GLOBL LCPI0_0<>(SB), (8+16), $32")
-	assert.Contains(t, string(asm), "TEXT ·uint8_mul(SB), $0-32")
+	assert.NoError(t, ParseObjectDump(config.AMD64(), string(dump), fn))
+	assert.Len(t, fn, 1)
+	assert.Len(t, fn[0].Consts, 1)
+	assert.Len(t, fn[0].Lines, 135)
+	for _, line := range fn[0].Lines {
+		assert.NotEmpty(t, line.Assembly)
+		assert.NotEmpty(t, line.Binary)
+	}
 }

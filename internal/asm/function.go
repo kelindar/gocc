@@ -187,8 +187,8 @@ func (c *Const) Compile(arch *config.Arch) string {
 		totalSize += d.Size
 	}
 
-	// Write the GLOBL instruction.
-	output.WriteString(fmt.Sprintf("GLOBL %s<>(SB), NOPTR, $%d\n", c.Label, totalSize))
+	// Write the GLOBL instruction (8=RODATA, 16=NOPTR)
+	output.WriteString(fmt.Sprintf("GLOBL %s<>(SB), (8+16), $%d\n", c.Label, totalSize))
 	return output.String()
 }
 
