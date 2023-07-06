@@ -98,11 +98,12 @@ func (t *Local) Translate() error {
 
 	// Map the machine code to the assembly one
 	for i, v := range assembly {
+		functions[i].Consts = v.Consts
 		functions[i].Lines = v.Lines
 	}
 
 	_ = t.Close()
-	return asm.Generate(t.Arch, t.GoAssembly, functions)
+	return asm.GenerateFile(t.Arch, t.GoAssembly, functions)
 }
 
 // Output returns the output files as a web result

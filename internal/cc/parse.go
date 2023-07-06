@@ -133,9 +133,9 @@ func convertFunction(declarator *cc.DirectDeclarator) (asm.Function, error) {
 	}
 
 	return asm.Function{
-		Name:       declarator.DirectDeclarator.Token.String(),
-		Position:   declarator.Position().Line,
-		Parameters: params,
+		Name:     declarator.DirectDeclarator.Token.String(),
+		Position: declarator.Position().Line,
+		Params:   params,
 	}, nil
 }
 

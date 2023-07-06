@@ -1,0 +1,1370 @@
+[
+	{
+		"name": "uint8_mul",
+		"position": 10,
+		"params": [
+			{
+				"type": "unsignedchar",
+				"name": "input1",
+				"isPointer": true
+			},
+			{
+				"type": "unsignedchar",
+				"name": "input2",
+				"isPointer": true
+			},
+			{
+				"type": "unsignedchar",
+				"name": "output",
+				"isPointer": true
+			},
+			{
+				"type": "unsignedlonglong",
+				"name": "size"
+			}
+		],
+		"consts": [
+			{
+				"label": "LCPI0_0",
+				"lines": [
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					},
+					{
+						"size": 2,
+						"value": 255
+					}
+				]
+			}
+		],
+		"lines": [
+			{
+				"binary": [
+					"55"
+				],
+				"assembly": "push\trbp"
+			},
+			{
+				"binary": [
+					"48",
+					"89",
+					"e5"
+				],
+				"assembly": "mov\trbp, rsp"
+			},
+			{
+				"binary": [
+					"48",
+					"83",
+					"e4",
+					"f8"
+				],
+				"assembly": "and\trsp, -8"
+			},
+			{
+				"binary": [
+					"85",
+					"c9"
+				],
+				"assembly": "test\tecx, ecx"
+			},
+			{
+				"binary": [
+					"0f",
+					"8e",
+					"96",
+					"00",
+					"00",
+					"00"
+				],
+				"assembly": "jle\t.LBB0_18"
+			},
+			{
+				"binary": [
+					"41",
+					"89",
+					"c8"
+				],
+				"assembly": "mov\tr8d, ecx"
+			},
+			{
+				"binary": [
+					"49",
+					"83",
+					"f8",
+					"10"
+				],
+				"assembly": "cmp\tr8, 16"
+			},
+			{
+				"binary": [
+					"0f",
+					"83",
+					"91",
+					"00",
+					"00",
+					"00"
+				],
+				"assembly": "jae\t.LBB0_3"
+			},
+			{
+				"binary": [
+					"45",
+					"31",
+					"c9"
+				],
+				"assembly": "xor\tr9d, r9d"
+			},
+			{
+				"labels": [
+					"LBB0_14"
+				],
+				"binary": [
+					"44",
+					"29",
+					"c9"
+				],
+				"assembly": "sub\tecx, r9d"
+			},
+			{
+				"binary": [
+					"4d",
+					"89",
+					"ca"
+				],
+				"assembly": "mov\tr10, r9"
+			},
+			{
+				"binary": [
+					"49",
+					"f7",
+					"d2"
+				],
+				"assembly": "not\tr10"
+			},
+			{
+				"binary": [
+					"4d",
+					"01",
+					"c2"
+				],
+				"assembly": "add\tr10, r8"
+			},
+			{
+				"binary": [
+					"48",
+					"83",
+					"e1",
+					"03"
+				],
+				"assembly": "and\trcx, 3"
+			},
+			{
+				"binary": [
+					"74",
+					"23"
+				],
+				"assembly": "je\t.LBB0_16"
+			},
+			{
+				"labels": [
+					"LBB0_15"
+				],
+				"binary": [
+					"42",
+					"0f",
+					"b6",
+					"04",
+					"0e"
+				],
+				"assembly": "movzx\teax, byte ptr [rsi + r9]"
+			},
+			{
+				"binary": [
+					"42",
+					"f6",
+					"24",
+					"0f"
+				],
+				"assembly": "mul\tbyte ptr [rdi + r9]"
+			},
+			{
+				"binary": [
+					"42",
+					"88",
+					"04",
+					"0a"
+				],
+				"assembly": "mov\tbyte ptr [rdx + r9], al"
+			},
+			{
+				"binary": [
+					"49",
+					"ff",
+					"c1"
+				],
+				"assembly": "inc\tr9"
+			},
+			{
+				"binary": [
+					"48",
+					"ff",
+					"c9"
+				],
+				"assembly": "dec\trcx"
+			},
+			{
+				"binary": [
+					"75",
+					"eb"
+				],
+				"assembly": "jne\t.LBB0_15"
+			},
+			{
+				"labels": [
+					"LBB0_16"
+				],
+				"binary": [
+					"49",
+					"83",
+					"fa",
+					"03"
+				],
+				"assembly": "cmp\tr10, 3"
+			},
+			{
+				"binary": [
+					"72",
+					"4b"
+				],
+				"assembly": "jb\t.LBB0_18"
+			},
+			{
+				"labels": [
+					"LBB0_17"
+				],
+				"binary": [
+					"42",
+					"0f",
+					"b6",
+					"04",
+					"0e"
+				],
+				"assembly": "movzx\teax, byte ptr [rsi + r9]"
+			},
+			{
+				"binary": [
+					"42",
+					"f6",
+					"24",
+					"0f"
+				],
+				"assembly": "mul\tbyte ptr [rdi + r9]"
+			},
+			{
+				"binary": [
+					"42",
+					"88",
+					"04",
+					"0a"
+				],
+				"assembly": "mov\tbyte ptr [rdx + r9], al"
+			},
+			{
+				"binary": [
+					"42",
+					"0f",
+					"b6",
+					"44",
+					"0e",
+					"01"
+				],
+				"assembly": "movzx\teax, byte ptr [rsi + r9 + 1]"
+			},
+			{
+				"binary": [
+					"42",
+					"f6",
+					"64",
+					"0f",
+					"01"
+				],
+				"assembly": "mul\tbyte ptr [rdi + r9 + 1]"
+			},
+			{
+				"binary": [
+					"42",
+					"88",
+					"44",
+					"0a",
+					"01"
+				],
+				"assembly": "mov\tbyte ptr [rdx + r9 + 1], al"
+			},
+			{
+				"binary": [
+					"42",
+					"0f",
+					"b6",
+					"44",
+					"0e",
+					"02"
+				],
+				"assembly": "movzx\teax, byte ptr [rsi + r9 + 2]"
+			},
+			{
+				"binary": [
+					"42",
+					"f6",
+					"64",
+					"0f",
+					"02"
+				],
+				"assembly": "mul\tbyte ptr [rdi + r9 + 2]"
+			},
+			{
+				"binary": [
+					"42",
+					"88",
+					"44",
+					"0a",
+					"02"
+				],
+				"assembly": "mov\tbyte ptr [rdx + r9 + 2], al"
+			},
+			{
+				"binary": [
+					"42",
+					"0f",
+					"b6",
+					"44",
+					"0e",
+					"03"
+				],
+				"assembly": "movzx\teax, byte ptr [rsi + r9 + 3]"
+			},
+			{
+				"binary": [
+					"42",
+					"f6",
+					"64",
+					"0f",
+					"03"
+				],
+				"assembly": "mul\tbyte ptr [rdi + r9 + 3]"
+			},
+			{
+				"binary": [
+					"42",
+					"88",
+					"44",
+					"0a",
+					"03"
+				],
+				"assembly": "mov\tbyte ptr [rdx + r9 + 3], al"
+			},
+			{
+				"binary": [
+					"49",
+					"83",
+					"c1",
+					"04"
+				],
+				"assembly": "add\tr9, 4"
+			},
+			{
+				"binary": [
+					"4d",
+					"39",
+					"c8"
+				],
+				"assembly": "cmp\tr8, r9"
+			},
+			{
+				"binary": [
+					"75",
+					"ba"
+				],
+				"assembly": "jne\t.LBB0_17"
+			},
+			{
+				"labels": [
+					"LBB0_18"
+				],
+				"binary": [
+					"48",
+					"89",
+					"ec"
+				],
+				"assembly": "mov\trsp, rbp"
+			},
+			{
+				"binary": [
+					"5d"
+				],
+				"assembly": "pop\trbp"
+			},
+			{
+				"binary": [
+					"c5",
+					"f8",
+					"77"
+				],
+				"assembly": "vzeroupper"
+			},
+			{
+				"binary": [
+					"c3"
+				],
+				"assembly": "ret"
+			},
+			{
+				"labels": [
+					"LBB0_3"
+				],
+				"binary": [
+					"48",
+					"89",
+					"d0"
+				],
+				"assembly": "mov\trax, rdx"
+			},
+			{
+				"binary": [
+					"48",
+					"29",
+					"f8"
+				],
+				"assembly": "sub\trax, rdi"
+			},
+			{
+				"binary": [
+					"45",
+					"31",
+					"c9"
+				],
+				"assembly": "xor\tr9d, r9d"
+			},
+			{
+				"binary": [
+					"48",
+					"3d",
+					"80",
+					"00",
+					"00",
+					"00"
+				],
+				"assembly": "cmp\trax, 128"
+			},
+			{
+				"binary": [
+					"0f",
+					"82",
+					"5d",
+					"ff",
+					"ff",
+					"ff"
+				],
+				"assembly": "jb\t.LBB0_14"
+			},
+			{
+				"binary": [
+					"48",
+					"89",
+					"d0"
+				],
+				"assembly": "mov\trax, rdx"
+			},
+			{
+				"binary": [
+					"48",
+					"29",
+					"f0"
+				],
+				"assembly": "sub\trax, rsi"
+			},
+			{
+				"binary": [
+					"48",
+					"3d",
+					"80",
+					"00",
+					"00",
+					"00"
+				],
+				"assembly": "cmp\trax, 128"
+			},
+			{
+				"binary": [
+					"0f",
+					"82",
+					"4b",
+					"ff",
+					"ff",
+					"ff"
+				],
+				"assembly": "jb\t.LBB0_14"
+			},
+			{
+				"binary": [
+					"41",
+					"81",
+					"f8",
+					"80",
+					"00",
+					"00",
+					"00"
+				],
+				"assembly": "cmp\tr8d, 128"
+			},
+			{
+				"binary": [
+					"73",
+					"08"
+				],
+				"assembly": "jae\t.LBB0_7"
+			},
+			{
+				"binary": [
+					"45",
+					"31",
+					"c9"
+				],
+				"assembly": "xor\tr9d, r9d"
+			},
+			{
+				"binary": [
+					"e9",
+					"13",
+					"01",
+					"00",
+					"00"
+				],
+				"assembly": "jmp\t.LBB0_11"
+			},
+			{
+				"labels": [
+					"LBB0_7"
+				],
+				"binary": [
+					"41",
+					"89",
+					"ca"
+				],
+				"assembly": "mov\tr10d, ecx"
+			},
+			{
+				"binary": [
+					"41",
+					"83",
+					"e2",
+					"7f"
+				],
+				"assembly": "and\tr10d, 127"
+			},
+			{
+				"binary": [
+					"4d",
+					"89",
+					"c1"
+				],
+				"assembly": "mov\tr9, r8"
+			},
+			{
+				"binary": [
+					"4d",
+					"29",
+					"d1"
+				],
+				"assembly": "sub\tr9, r10"
+			},
+			{
+				"binary": [
+					"31",
+					"c0"
+				],
+				"assembly": "xor\teax, eax"
+			},
+			{
+				"binary": [
+					"c5",
+					"fd",
+					"6f",
+					"05",
+					"00",
+					"00",
+					"00",
+					"00"
+				],
+				"assembly": "vmovdqa\tymm0, ymmword ptr [rip + .LCPI0_0]"
+			},
+			{
+				"labels": [
+					"LBB0_8"
+				],
+				"binary": [
+					"c5",
+					"fe",
+					"6f",
+					"1c",
+					"07"
+				],
+				"assembly": "vmovdqu\tymm3, ymmword ptr [rdi + rax]"
+			},
+			{
+				"binary": [
+					"c5",
+					"fe",
+					"6f",
+					"64",
+					"07",
+					"20"
+				],
+				"assembly": "vmovdqu\tymm4, ymmword ptr [rdi + rax + 32]"
+			},
+			{
+				"binary": [
+					"c5",
+					"fe",
+					"6f",
+					"6c",
+					"07",
+					"40"
+				],
+				"assembly": "vmovdqu\tymm5, ymmword ptr [rdi + rax + 64]"
+			},
+			{
+				"binary": [
+					"c5",
+					"fe",
+					"6f",
+					"4c",
+					"07",
+					"60"
+				],
+				"assembly": "vmovdqu\tymm1, ymmword ptr [rdi + rax + 96]"
+			},
+			{
+				"binary": [
+					"c5",
+					"fe",
+					"6f",
+					"34",
+					"06"
+				],
+				"assembly": "vmovdqu\tymm6, ymmword ptr [rsi + rax]"
+			},
+			{
+				"binary": [
+					"c5",
+					"fe",
+					"6f",
+					"7c",
+					"06",
+					"20"
+				],
+				"assembly": "vmovdqu\tymm7, ymmword ptr [rsi + rax + 32]"
+			},
+			{
+				"binary": [
+					"c5",
+					"7e",
+					"6f",
+					"44",
+					"06",
+					"40"
+				],
+				"assembly": "vmovdqu\tymm8, ymmword ptr [rsi + rax + 64]"
+			},
+			{
+				"binary": [
+					"c5",
+					"fe",
+					"6f",
+					"54",
+					"06",
+					"60"
+				],
+				"assembly": "vmovdqu\tymm2, ymmword ptr [rsi + rax + 96]"
+			},
+			{
+				"binary": [
+					"c5",
+					"65",
+					"68",
+					"cb"
+				],
+				"assembly": "vpunpckhbw\tymm9, ymm3, ymm3"
+			},
+			{
+				"binary": [
+					"c5",
+					"4d",
+					"68",
+					"d6"
+				],
+				"assembly": "vpunpckhbw\tymm10, ymm6, ymm6"
+			},
+			{
+				"binary": [
+					"c4",
+					"41",
+					"2d",
+					"d5",
+					"c9"
+				],
+				"assembly": "vpmullw\tymm9, ymm10, ymm9"
+			},
+			{
+				"binary": [
+					"c5",
+					"35",
+					"db",
+					"c8"
+				],
+				"assembly": "vpand\tymm9, ymm9, ymm0"
+			},
+			{
+				"binary": [
+					"c5",
+					"e5",
+					"60",
+					"db"
+				],
+				"assembly": "vpunpcklbw\tymm3, ymm3, ymm3"
+			},
+			{
+				"binary": [
+					"c5",
+					"cd",
+					"60",
+					"f6"
+				],
+				"assembly": "vpunpcklbw\tymm6, ymm6, ymm6"
+			},
+			{
+				"binary": [
+					"c5",
+					"cd",
+					"d5",
+					"db"
+				],
+				"assembly": "vpmullw\tymm3, ymm6, ymm3"
+			},
+			{
+				"binary": [
+					"c5",
+					"e5",
+					"db",
+					"d8"
+				],
+				"assembly": "vpand\tymm3, ymm3, ymm0"
+			},
+			{
+				"binary": [
+					"c4",
+					"c1",
+					"65",
+					"67",
+					"d9"
+				],
+				"assembly": "vpackuswb\tymm3, ymm3, ymm9"
+			},
+			{
+				"binary": [
+					"c5",
+					"dd",
+					"68",
+					"f4"
+				],
+				"assembly": "vpunpckhbw\tymm6, ymm4, ymm4"
+			},
+			{
+				"binary": [
+					"c5",
+					"45",
+					"68",
+					"cf"
+				],
+				"assembly": "vpunpckhbw\tymm9, ymm7, ymm7"
+			},
+			{
+				"binary": [
+					"c5",
+					"b5",
+					"d5",
+					"f6"
+				],
+				"assembly": "vpmullw\tymm6, ymm9, ymm6"
+			},
+			{
+				"binary": [
+					"c5",
+					"cd",
+					"db",
+					"f0"
+				],
+				"assembly": "vpand\tymm6, ymm6, ymm0"
+			},
+			{
+				"binary": [
+					"c5",
+					"dd",
+					"60",
+					"e4"
+				],
+				"assembly": "vpunpcklbw\tymm4, ymm4, ymm4"
+			},
+			{
+				"binary": [
+					"c5",
+					"c5",
+					"60",
+					"ff"
+				],
+				"assembly": "vpunpcklbw\tymm7, ymm7, ymm7"
+			},
+			{
+				"binary": [
+					"c5",
+					"c5",
+					"d5",
+					"e4"
+				],
+				"assembly": "vpmullw\tymm4, ymm7, ymm4"
+			},
+			{
+				"binary": [
+					"c5",
+					"dd",
+					"db",
+					"e0"
+				],
+				"assembly": "vpand\tymm4, ymm4, ymm0"
+			},
+			{
+				"binary": [
+					"c5",
+					"dd",
+					"67",
+					"e6"
+				],
+				"assembly": "vpackuswb\tymm4, ymm4, ymm6"
+			},
+			{
+				"binary": [
+					"c5",
+					"d5",
+					"68",
+					"f5"
+				],
+				"assembly": "vpunpckhbw\tymm6, ymm5, ymm5"
+			},
+			{
+				"binary": [
+					"c4",
+					"c1",
+					"3d",
+					"68",
+					"f8"
+				],
+				"assembly": "vpunpckhbw\tymm7, ymm8, ymm8"
+			},
+			{
+				"binary": [
+					"c5",
+					"c5",
+					"d5",
+					"f6"
+				],
+				"assembly": "vpmullw\tymm6, ymm7, ymm6"
+			},
+			{
+				"binary": [
+					"c5",
+					"cd",
+					"db",
+					"f0"
+				],
+				"assembly": "vpand\tymm6, ymm6, ymm0"
+			},
+			{
+				"binary": [
+					"c5",
+					"d5",
+					"60",
+					"ed"
+				],
+				"assembly": "vpunpcklbw\tymm5, ymm5, ymm5"
+			},
+			{
+				"binary": [
+					"c4",
+					"c1",
+					"3d",
+					"60",
+					"f8"
+				],
+				"assembly": "vpunpcklbw\tymm7, ymm8, ymm8"
+			},
+			{
+				"binary": [
+					"c5",
+					"c5",
+					"d5",
+					"ed"
+				],
+				"assembly": "vpmullw\tymm5, ymm7, ymm5"
+			},
+			{
+				"binary": [
+					"c5",
+					"d5",
+					"db",
+					"e8"
+				],
+				"assembly": "vpand\tymm5, ymm5, ymm0"
+			},
+			{
+				"binary": [
+					"c5",
+					"d5",
+					"67",
+					"ee"
+				],
+				"assembly": "vpackuswb\tymm5, ymm5, ymm6"
+			},
+			{
+				"binary": [
+					"c5",
+					"f5",
+					"68",
+					"f1"
+				],
+				"assembly": "vpunpckhbw\tymm6, ymm1, ymm1"
+			},
+			{
+				"binary": [
+					"c5",
+					"ed",
+					"68",
+					"fa"
+				],
+				"assembly": "vpunpckhbw\tymm7, ymm2, ymm2"
+			},
+			{
+				"binary": [
+					"c5",
+					"c5",
+					"d5",
+					"f6"
+				],
+				"assembly": "vpmullw\tymm6, ymm7, ymm6"
+			},
+			{
+				"binary": [
+					"c5",
+					"cd",
+					"db",
+					"f0"
+				],
+				"assembly": "vpand\tymm6, ymm6, ymm0"
+			},
+			{
+				"binary": [
+					"c5",
+					"f5",
+					"60",
+					"c9"
+				],
+				"assembly": "vpunpcklbw\tymm1, ymm1, ymm1"
+			},
+			{
+				"binary": [
+					"c5",
+					"ed",
+					"60",
+					"d2"
+				],
+				"assembly": "vpunpcklbw\tymm2, ymm2, ymm2"
+			},
+			{
+				"binary": [
+					"c5",
+					"ed",
+					"d5",
+					"c9"
+				],
+				"assembly": "vpmullw\tymm1, ymm2, ymm1"
+			},
+			{
+				"binary": [
+					"c5",
+					"f5",
+					"db",
+					"c8"
+				],
+				"assembly": "vpand\tymm1, ymm1, ymm0"
+			},
+			{
+				"binary": [
+					"c5",
+					"f5",
+					"67",
+					"ce"
+				],
+				"assembly": "vpackuswb\tymm1, ymm1, ymm6"
+			},
+			{
+				"binary": [
+					"c5",
+					"fe",
+					"7f",
+					"1c",
+					"02"
+				],
+				"assembly": "vmovdqu\tymmword ptr [rdx + rax], ymm3"
+			},
+			{
+				"binary": [
+					"c5",
+					"fe",
+					"7f",
+					"64",
+					"02",
+					"20"
+				],
+				"assembly": "vmovdqu\tymmword ptr [rdx + rax + 32], ymm4"
+			},
+			{
+				"binary": [
+					"c5",
+					"fe",
+					"7f",
+					"6c",
+					"02",
+					"40"
+				],
+				"assembly": "vmovdqu\tymmword ptr [rdx + rax + 64], ymm5"
+			},
+			{
+				"binary": [
+					"c5",
+					"fe",
+					"7f",
+					"4c",
+					"02",
+					"60"
+				],
+				"assembly": "vmovdqu\tymmword ptr [rdx + rax + 96], ymm1"
+			},
+			{
+				"binary": [
+					"48",
+					"83",
+					"e8",
+					"80"
+				],
+				"assembly": "sub\trax, -128"
+			},
+			{
+				"binary": [
+					"49",
+					"39",
+					"c1"
+				],
+				"assembly": "cmp\tr9, rax"
+			},
+			{
+				"binary": [
+					"0f",
+					"85",
+					"1a",
+					"ff",
+					"ff",
+					"ff"
+				],
+				"assembly": "jne\t.LBB0_8"
+			},
+			{
+				"binary": [
+					"4d",
+					"85",
+					"d2"
+				],
+				"assembly": "test\tr10, r10"
+			},
+			{
+				"binary": [
+					"0f",
+					"84",
+					"b7",
+					"fe",
+					"ff",
+					"ff"
+				],
+				"assembly": "je\t.LBB0_18"
+			},
+			{
+				"binary": [
+					"41",
+					"83",
+					"fa",
+					"10"
+				],
+				"assembly": "cmp\tr10d, 16"
+			},
+			{
+				"binary": [
+					"0f",
+					"82",
+					"27",
+					"fe",
+					"ff",
+					"ff"
+				],
+				"assembly": "jb\t.LBB0_14"
+			},
+			{
+				"labels": [
+					"LBB0_11"
+				],
+				"binary": [
+					"4c",
+					"89",
+					"c8"
+				],
+				"assembly": "mov\trax, r9"
+			},
+			{
+				"binary": [
+					"41",
+					"89",
+					"ca"
+				],
+				"assembly": "mov\tr10d, ecx"
+			},
+			{
+				"binary": [
+					"41",
+					"83",
+					"e2",
+					"0f"
+				],
+				"assembly": "and\tr10d, 15"
+			},
+			{
+				"binary": [
+					"4d",
+					"89",
+					"c1"
+				],
+				"assembly": "mov\tr9, r8"
+			},
+			{
+				"binary": [
+					"4d",
+					"29",
+					"d1"
+				],
+				"assembly": "sub\tr9, r10"
+			},
+			{
+				"binary": [
+					"c5",
+					"fd",
+					"6f",
+					"05",
+					"00",
+					"00",
+					"00",
+					"00"
+				],
+				"assembly": "vmovdqa\tymm0, ymmword ptr [rip + .LCPI0_0]"
+			},
+			{
+				"labels": [
+					"LBB0_12"
+				],
+				"binary": [
+					"c4",
+					"e2",
+					"7d",
+					"30",
+					"0c",
+					"07"
+				],
+				"assembly": "vpmovzxbw\tymm1, xmmword ptr [rdi + rax]"
+			},
+			{
+				"binary": [
+					"c4",
+					"e2",
+					"7d",
+					"30",
+					"14",
+					"06"
+				],
+				"assembly": "vpmovzxbw\tymm2, xmmword ptr [rsi + rax]"
+			},
+			{
+				"binary": [
+					"c5",
+					"ed",
+					"d5",
+					"c9"
+				],
+				"assembly": "vpmullw\tymm1, ymm2, ymm1"
+			},
+			{
+				"binary": [
+					"c5",
+					"f5",
+					"db",
+					"c8"
+				],
+				"assembly": "vpand\tymm1, ymm1, ymm0"
+			},
+			{
+				"binary": [
+					"c4",
+					"e3",
+					"7d",
+					"39",
+					"ca",
+					"01"
+				],
+				"assembly": "vextracti128\txmm2, ymm1, 1"
+			},
+			{
+				"binary": [
+					"c5",
+					"f1",
+					"67",
+					"ca"
+				],
+				"assembly": "vpackuswb\txmm1, xmm1, xmm2"
+			},
+			{
+				"binary": [
+					"c5",
+					"fa",
+					"7f",
+					"0c",
+					"02"
+				],
+				"assembly": "vmovdqu\txmmword ptr [rdx + rax], xmm1"
+			},
+			{
+				"binary": [
+					"48",
+					"83",
+					"c0",
+					"10"
+				],
+				"assembly": "add\trax, 16"
+			},
+			{
+				"binary": [
+					"49",
+					"39",
+					"c1"
+				],
+				"assembly": "cmp\tr9, rax"
+			},
+			{
+				"binary": [
+					"75",
+					"d4"
+				],
+				"assembly": "jne\t.LBB0_12"
+			},
+			{
+				"binary": [
+					"4d",
+					"85",
+					"d2"
+				],
+				"assembly": "test\tr10, r10"
+			},
+			{
+				"binary": [
+					"0f",
+					"85",
+					"cb",
+					"fd",
+					"ff",
+					"ff"
+				],
+				"assembly": "jne\t.LBB0_14"
+			},
+			{
+				"binary": [
+					"e9",
+					"4c",
+					"fe",
+					"ff",
+					"ff"
+				],
+				"assembly": "jmp\t.LBB0_18"
+			}
+		]
+	}
+]

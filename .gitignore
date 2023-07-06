@@ -1,4 +1,5 @@
 .DS_Store
 *.o
 *.s
+!/fixtures/*
 !/example/simd/*s

@@ -109,6 +109,15 @@ func TestMatmul(t *testing.T) {
 	assert.Equal(t, []float32{19, 22, 43, 50}, o.Data)
 }
 
+func TestUintMul(t *testing.T) {
+	input1 := []uint8{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	input2 := []uint8{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	dst := make([]uint8, 9)
+
+	uint8_avx2_mul(unsafe.Pointer(&input1[0]), unsafe.Pointer(&input2[0]), unsafe.Pointer(&(dst)[0]), uint64(len(dst)))
+	assert.Equal(t, []uint8{1, 4, 9, 16, 25, 36, 49, 64, 81}, dst)
+}
+
 // newTestMatrix creates a new matrix
 func newTestMatrix(r, c int) *Matrix {
 	mx := NewMatrix(r, c, nil)
