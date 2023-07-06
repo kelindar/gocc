@@ -29,7 +29,7 @@ type Function struct {
 	Name     string  `json:"name"`
 	Position int     `json:"position"`
 	Params   []Param `json:"params"`
-	Consts   []Const `json:"consts"`
+	Consts   []Const `json:"consts,omitempty"`
 	Lines    []Line  `json:"lines"`
 }
 
@@ -52,9 +52,9 @@ func (f *Function) String() string {
 
 // Line represents a line of assembly code
 type Line struct {
-	Labels   []string `json:"labels"`   // Labels for the line
-	Binary   []string `json:"binary"`   // Binary representation of the line
-	Assembly string   `json:"assembly"` // Assembly representation of the line
+	Labels   []string `json:"labels,omitempty"` // Labels for the line
+	Binary   []string `json:"binary"`           // Binary representation of the line
+	Assembly string   `json:"assembly"`         // Assembly representation of the line
 }
 
 // Compile returns the string representation of a line in PLAN9 assembly
@@ -118,9 +118,9 @@ func (line *Line) Compile(arch *config.Arch) string {
 
 // Param represents a function parameter
 type Param struct {
-	Type      string // Type of the parameter (C type)
-	Name      string // Name of the parameter
-	IsPointer bool   // Whether the parameter is a pointer
+	Type      string `json:"type"`                // Type of the parameter (C type)
+	Name      string `json:"name"`                // Name of the parameter
+	IsPointer bool   `json:"isPointer,omitempty"` // Whether the parameter is a pointer
 }
 
 // String returns the Go string representation of a parameter

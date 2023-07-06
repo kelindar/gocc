@@ -98,6 +98,7 @@ func (t *Local) Translate() error {
 
 	// Map the machine code to the assembly one
 	for i, v := range assembly {
+		functions[i].Consts = v.Consts
 		functions[i].Lines = v.Lines
 	}
 

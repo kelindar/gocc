@@ -51,15 +51,15 @@ func ParseAssembly(arch *config.Arch, path string) ([]Function, error) {
 		line := scanner.Text()
 		switch {
 
+		// Handle constant lines and attach them to the current label
+		case arch.Const.MatchString(line):
+			constant.Lines = append(constant.Lines, parseConst(arch, line))
+
 		// Skip attirubtes and comment lines
 		case arch.Attribute.MatchString(line):
 			continue
 		case arch.Comment.MatchString(line):
 			continue
-
-		// Handle constant lines and attach them to the current label
-		case arch.Const.MatchString(line):
-			constant.Lines = append(constant.Lines, parseConst(arch, line))
 
 		// Handle assembly labels. We could potentially have multiple labels per line if
 		// compiler decides to generate no-op instructions.
