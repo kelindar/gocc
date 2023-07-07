@@ -88,7 +88,7 @@ func ParseAssembly(arch *config.Arch, path string) ([]Function, error) {
 			labelName = "" // Reset current label
 
 			// If we have a constant, attach it to the current function
-			if len(constant.Lines) > 0 {
+			if constant != nil && len(constant.Lines) > 0 {
 				current.Consts = append(current.Consts, *constant)
 			}
 
