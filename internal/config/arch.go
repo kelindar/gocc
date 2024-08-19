@@ -152,6 +152,7 @@ func Apple() *Arch {
 		Symbol:    regexp.MustCompile(`^\w+\s+<\w+>:$`),
 		Data:      regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
 		Comment:   regexp.MustCompile(`^\s*;.*$`),
+		Const:     regexp.MustCompile(`^not_implemented$`),
 		Registers: []string{"R0", "R1", "R2", "R3"},
 		BuildTags: "//go:build !noasm && darwin && arm64\n",
 		CommentCh: ";",
