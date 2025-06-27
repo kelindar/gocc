@@ -154,6 +154,13 @@ func (p *Param) String() string {
 		return fmt.Sprintf("%s int64", p.Name)
 	case "int":
 		return fmt.Sprintf("%s int32", p.Name)
+	case "unsignedlong":
+		return fmt.Sprintf("%s uint32", p.Name)
+	case "long":
+		return fmt.Sprintf("%s int32", p.Name)
+	case "unsignedshort":
+		return fmt.Sprintf("%s uint16", p.Name)
+	case "short":
 	default:
 		panic(fmt.Sprintf("gocc: unknown type %s", p.Type))
 	}
