@@ -161,6 +161,7 @@ func (p *Param) String() string {
 	case "unsignedshort":
 		return fmt.Sprintf("%s uint16", p.Name)
 	case "short":
+		return fmt.Sprintf("%s int16", p.Name)
 	default:
 		panic(fmt.Sprintf("gocc: unknown type %s", p.Type))
 	}
