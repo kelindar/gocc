@@ -1,5 +1,5 @@
 <p align="center">
-<img width="250" height="110" src=".github/logo.png" border="0" alt="kelindar/gocc">
+<img width="300" height="100" src=".github/logo.png" border="0" alt="kelindar/gocc">
 <br>
 <img src="https://img.shields.io/github/go-mod/go-version/kelindar/gocc" alt="Go Version">
 <a href="https://opensource.org/license/apache-2-0/"><img src="https://img.shields.io/badge/License-Apache-blue.svg" alt="License"></a>
