@@ -32,6 +32,9 @@ type Arch struct {
 	Comment      *regexp.Regexp // Parses assembly comments
 	Const        *regexp.Regexp // Parses assembly constants
 	Registers    []string       // Registers to use
+	FloatRegs    []string       // Floating-point registers to use
+	Float32Op    string         // Float32 move instruction from FP stack slot to FP register
+	Float64Op    string         // Float64 move instruction from FP stack slot to FP register
 	BuildTags    string         // Golang build tags
 	CommentCh    string         // Assembly comment character
 	CallOp       string         // Call instruction to use to move the params onto the stack
@@ -74,10 +77,13 @@ func AMD64() *Arch {
 		Comment:      regexp.MustCompile(`^\s*#.*$`),
 		Const:        regexp.MustCompile(`^\s+\.(byte|short|long|int|quad)\s+(-?\d+).+$`),
 		Registers:    []string{"DI", "SI", "DX", "CX"},
+		FloatRegs:    []string{"X0", "X1", "X2", "X3", "X4", "X5", "X6", "X7"},
+		Float32Op:    "MOVSS",
+		Float64Op:    "MOVSD",
 		BuildTags:    "//go:build !noasm && amd64\n",
 		CommentCh:    "#",
 		CallOp:       "MOVQ",
-		ClangFlags:   []string{"--target=x86_64-linux-gnu"},
+		ClangFlags:   []string{"--target=x86_64-linux-gnu", "-mno-red-zone", "-mstackrealign"},
 		Disassembler: []string{"objdump", "--insn-width", "16"},
 	}
 }
@@ -111,10 +117,13 @@ func ARM64() *Arch {
 		Comment:    regexp.MustCompile(`^\s*//.*$`),
 		Const:      regexp.MustCompile(`^not_implemented$`),
 		Registers:  []string{"R0", "R1", "R2", "R3"},
+		FloatRegs:  []string{"F0", "F1", "F2", "F3", "F4", "F5", "F6", "F7"},
+		Float32Op:  "FMOVS",
+		Float64Op:  "FMOVD",
 		BuildTags:  "//go:build !noasm && !darwin && arm64\n",
 		CommentCh:  "//",
 		CallOp:     "MOVD",
-		ClangFlags: []string{"--target=aarch64-linux-gnu"},
+		ClangFlags: []string{"--target=aarch64-linux-gnu", "-fomit-frame-pointer"},
 	}
 }
 
@@ -139,7 +148,7 @@ func Apple() *Arch {
 	if runtime.GOOS != "darwin" {
 		arch := ARM64()
 		arch.BuildTags = "//go:build !noasm && darwin && arm64\n"
-		arch.ClangFlags = []string{"--target=aarch64-apple-darwin", "--sysroot=/usr/osxcross/SDK/MacOSX11.3.sdk/"}
+		arch.ClangFlags = []string{"--target=aarch64-apple-darwin", "--sysroot=/usr/osxcross/SDK/MacOSX11.3.sdk/", "-fomit-frame-pointer"}
 		return arch
 	}
 
@@ -154,9 +163,16 @@ func Apple() *Arch {
 		Comment:   regexp.MustCompile(`^\s*;.*$`),
 		Const:     regexp.MustCompile(`^not_implemented$`),
 		Registers: []string{"R0", "R1", "R2", "R3"},
+		FloatRegs: []string{"F0", "F1", "F2", "F3", "F4", "F5", "F6", "F7"},
+		Float32Op: "FMOVS",
+		Float64Op: "FMOVD",
 		BuildTags: "//go:build !noasm && darwin && arm64\n",
 		CommentCh: ";",
 		CallOp:    "MOVD",
+		ClangFlags: []string{
+			"--target=aarch64-apple-darwin",
+			"-fomit-frame-pointer",
+		},
 	}
 }
 

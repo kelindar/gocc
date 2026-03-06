@@ -24,18 +24,28 @@ func TestARM64(t *testing.T) {
 	cfg, err := For("arm64")
 	assert.NoError(t, err)
 	assert.Contains(t, cfg.BuildTags, "arm64")
+	assert.Contains(t, cfg.ClangFlags, "-fomit-frame-pointer")
+	assert.NotEmpty(t, cfg.Float32Op)
+	assert.NotEmpty(t, cfg.Float64Op)
 }
 
 func TestAMD64(t *testing.T) {
 	cfg, err := For("amd64")
 	assert.NoError(t, err)
 	assert.Contains(t, cfg.BuildTags, "amd64")
+	assert.NotEmpty(t, cfg.Float32Op)
+	assert.NotEmpty(t, cfg.Float64Op)
+	assert.Contains(t, cfg.ClangFlags, "-mno-red-zone")
+	assert.Contains(t, cfg.ClangFlags, "-mstackrealign")
 }
 
 func TestApple(t *testing.T) {
 	cfg, err := For("apple")
 	assert.NoError(t, err)
 	assert.Contains(t, cfg.BuildTags, "arm64")
+	assert.Contains(t, cfg.ClangFlags, "-fomit-frame-pointer")
+	assert.NotEmpty(t, cfg.Float32Op)
+	assert.NotEmpty(t, cfg.Float64Op)
 }
 
 func TestNeon(t *testing.T) {
