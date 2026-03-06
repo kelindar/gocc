@@ -36,8 +36,7 @@ type Function struct {
 // String returns the function signature for a Go stub
 func (f *Function) String() string {
 	var builder strings.Builder
-	builder.WriteString("\n//go:nosplit\n")
-	builder.WriteString("\n//go:noescape\n")
+	builder.WriteString("\n//go:nosplit\n//go:noescape\n")
 	builder.WriteString(fmt.Sprintf("func %s(", f.Name))
 	for i, param := range f.Params {
 		if i > 0 {
