@@ -58,7 +58,11 @@ type Line struct {
 }
 
 // Compile returns the string representation of a line in PLAN9 assembly
-func (line *Line) Compile(arch *config.Arch) string {
+func (line *Line) Compile(arch *config.Arch) (string, error) {
+	if err := line.Validate(); err != nil {
+		return "", err
+	}
+
 	var builder strings.Builder
 	for _, label := range line.Labels {
 		builder.WriteString(label)
@@ -72,17 +76,17 @@ func (line *Line) Compile(arch *config.Arch) string {
 		operand := splits[1]
 		builder.WriteString(fmt.Sprintf("%s %s", strings.ToUpper(op), operand))
 		builder.WriteString("\n")
-		return builder.String()
+		return builder.String(), nil
 	}
 
-	// Special case for arm64, since it's a RISC architecture
+	// Special case for arm64
 	if arch != nil && arch.Name == "arm64" && len(line.Binary) == 4 {
 		builder.WriteString(fmt.Sprintf("WORD $0x%v%v%v%v",
 			line.Binary[3], line.Binary[2], line.Binary[1], line.Binary[0]))
 		builder.WriteString("\t// ")
 		builder.WriteString(line.Assembly)
 		builder.WriteString("\n")
-		return builder.String()
+		return builder.String(), nil
 	}
 
 	// Dynamic length, assuming WORD = 32-bit
@@ -113,7 +117,7 @@ func (line *Line) Compile(arch *config.Arch) string {
 	builder.WriteString("\t// ")
 	builder.WriteString(line.Assembly)
 	builder.WriteString("\n")
-	return builder.String()
+	return builder.String(), nil
 }
 
 // Param represents a function parameter

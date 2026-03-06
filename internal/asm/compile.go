@@ -35,15 +35,67 @@ func Generate(arch *config.Arch, functions []Function) ([]byte, error) {
 		}
 
 		builder.WriteString(fmt.Sprintf("\nTEXT ·%v(SB), $0-32\n", function.Name))
+		gpIdx, fpIdx := 0, 0
 		for i, param := range function.Params {
-			builder.WriteString(fmt.Sprintf("\t%s %s+%d(FP), %s\n", arch.CallOp, param.Name, i*8, arch.Registers[i]))
+			instr, err := moveInstruction(arch, param, i*8, &gpIdx, &fpIdx)
+			if err != nil {
+				return nil, err
+			}
+
+			builder.WriteString("\t")
+			builder.WriteString(instr)
+			builder.WriteString("\n")
 		}
+
+		// Validate and compile each line
 		for _, line := range function.Lines {
-			builder.WriteString(line.Compile(arch))
+			compiled, err := line.Compile(arch)
+			if err != nil {
+				return nil, fmt.Errorf("%w in %s; compile with frame pointers omitted", err, function.Name)
+			}
+
+			builder.WriteString(compiled)
 		}
 	}
 
 	return asmfmt.Format(strings.NewReader(builder.String()))
+}
+
+// moveInstruction generates the assembly instruction to move a parameter onto the stack
+func moveInstruction(arch *config.Arch, param Param, offset int, gpIdx, fpIdx *int) (string, error) {
+	switch {
+
+	// Floating-point parameters
+	case !param.IsPointer && (param.Type == "float" || param.Type == "double"):
+		if *fpIdx >= len(arch.FloatRegs) {
+			return "", fmt.Errorf("gocc: too many floating-point parameters for %s", arch.Name)
+		}
+		reg := arch.FloatRegs[*fpIdx]
+		(*fpIdx)++
+		return fmt.Sprintf("%s %s+%d(FP), %s", moveOp(arch, param), param.Name, offset, reg), nil
+
+	// General-purpose parameters
+	default:
+		if *gpIdx >= len(arch.Registers) {
+			return "", fmt.Errorf("gocc: too many general-purpose parameters for %s", arch.Name)
+		}
+		reg := arch.Registers[*gpIdx]
+		(*gpIdx)++
+		return fmt.Sprintf("%s %s+%d(FP), %s", moveOp(arch, param), param.Name, offset, reg), nil
+	}
+}
+
+func moveOp(arch *config.Arch, param Param) string {
+	switch  {
+	case param.IsPointer:
+		return arch.CallOp
+	case param.Type == "float":
+		return arch.Float32Op
+	case param.Type == "double":
+		return arch.Float64Op
+	default:
+		return arch.CallOp
+	}
 }
 
 // GenerateFile generates the Go PLAN9 assembly file

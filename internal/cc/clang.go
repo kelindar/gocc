@@ -45,7 +45,7 @@ func NewCompiler(arch *config.Arch) (*Compiler, error) {
 
 // compile compiles the C source file to assembly and then to object.
 func (c *Compiler) Compile(source, assembly, object string, args ...string) error {
-	args = append(args, "-mno-red-zone", "-mstackrealign", "-mllvm", "-inline-threshold=1000",
+	args = append(args, "-mllvm", "-inline-threshold=1000",
 		"-fno-asynchronous-unwind-tables", "-fno-exceptions", "-fno-rtti", "-ffast-math")
 	args = append(args, c.arch.ClangFlags...)
 
