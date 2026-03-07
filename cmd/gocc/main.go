@@ -30,8 +30,6 @@ func init() {
 	command.PersistentFlags().StringP("arch", "a", "amd64", "target architecture to use")
 	command.PersistentFlags().StringP("package", "p", "", "go package name to use for the stubs")
 	command.PersistentFlags().BoolP("local", "l", false, "use local machine for compilation")
-	command.PersistentFlags().Bool("safe-const-align", true, "rewrite alignment-required constant-pool accesses to unaligned-safe forms on amd64")
-	command.PersistentFlags().Bool("strict-align", false, "disable constant-pool alignment safety rewrites")
 }
 
 func main() {
@@ -64,17 +62,12 @@ var command = &cobra.Command{
 		optimizeLevel, _ := cmd.PersistentFlags().GetInt("optimize-level")
 		packageName, _ := cmd.PersistentFlags().GetString("package")
 		options = append(options, fmt.Sprintf("-O%d", optimizeLevel))
-		safeConstAlign, _ := cmd.PersistentFlags().GetBool("safe-const-align")
-		strictAlign, _ := cmd.PersistentFlags().GetBool("strict-align")
-		if strictAlign {
-			safeConstAlign = false
-		}
 
 		// Compile locally or remotely
 		local, _ := cmd.PersistentFlags().GetBool("local")
 		switch local {
 		case true:
-			if err := compileLocally(target, args[0], output, packageName, safeConstAlign, options...); err != nil {
+			if err := compileLocally(target, args[0], output, packageName, options...); err != nil {
 				exit(err)
 			}
 		default:
@@ -94,7 +87,7 @@ func compileRemotely(target, source, outputDir, packageName string, options ...s
 	return remote.Translate()
 }
 
-func compileLocally(target, source, outputDir, packageName string, safeConstAlign bool, options ...string) error {
+func compileLocally(target, source, outputDir, packageName string, options ...string) error {
 	arch, err := config.For(target)
 	if err != nil {
 		exit(err)
