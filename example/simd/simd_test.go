@@ -109,15 +109,6 @@ func TestMatmul(t *testing.T) {
 	assert.Equal(t, []float32{19, 22, 43, 50}, o.Data)
 }
 
-/*func TestUintMul(t *testing.T) {
-	input1 := []uint8{1, 2, 3, 4, 5, 6, 7, 8, 9}
-	input2 := []uint8{1, 2, 3, 4, 5, 6, 7, 8, 9}
-	dst := make([]uint8, 9)
-
-	uint8_avx2_mul(unsafe.Pointer(&input1[0]), unsafe.Pointer(&input2[0]), unsafe.Pointer(&(dst)[0]), uint64(len(dst)))
-	assert.Equal(t, []uint8{1, 4, 9, 16, 25, 36, 49, 64, 81}, dst)
-}*/
-
 // newTestMatrix creates a new matrix
 func newTestMatrix(r, c int) *Matrix {
 	mx := NewMatrix(r, c, nil)
@@ -125,4 +116,83 @@ func newTestMatrix(r, c int) *Matrix {
 		mx.Data[i] = 2
 	}
 	return &mx
+}
+
+func TestUintMul(t *testing.T) {
+	input1 := makeVector[uint8](70)
+	input2 := makeVector[uint8](70)
+
+	// generic implementation
+	dst1 := make([]uint8, 70)
+	mul(dst1, input1, input2)
+
+	// asm implementation
+	dst2 := make([]uint8, 70)
+	_uint8_mul(unsafe.Pointer(&input1[0]), unsafe.Pointer(&input2[0]), unsafe.Pointer(&(dst2)[0]), uint64(len(dst2)))
+
+	assert.Equal(t, dst1, dst2)
+}
+
+func TestIntMin(t *testing.T) {
+	input := makeVector[int8](70)
+
+	// generic implementation
+	min1 := min(input)
+
+	// asm implementation
+	min2 := int8(0)
+	_int8_min(unsafe.Pointer(&input[0]), unsafe.Pointer(&min2), uint64(len(input)))
+
+	assert.EqualValues(t, min1, min2)
+}
+
+func TestIntDiv(t *testing.T) {
+	input1 := makeVector[int8](70)
+	input2 := makeVector[int8](70)
+
+	// generic implementation
+	dst1 := make([]int8, 70)
+	div(dst1, input1, input2)
+
+	// asm implementation
+	dst2 := make([]int8, 70)
+	_int8_div(unsafe.Pointer(&input1[0]), unsafe.Pointer(&input2[0]), unsafe.Pointer(&dst2[0]), uint64(len(dst2)))
+
+	assert.InDeltaSlice(t, dst1, dst2, 0.01)
+}
+
+// Mul multiplies input1 by input2 and writes back the result into dst slice
+func mul(dst, input1, input2 []uint8) []uint8 {
+	for i, v := range input1 {
+		dst[i] = v * input2[i]
+	}
+	return dst
+}
+
+// Min finds the minimum value in the input slice and writes back the result into dst slice
+func min(input []int8) int8 {
+	min := input[0]
+	for _, v := range input[1:] {
+		if v < min {
+			min = v
+		}
+	}
+	return min
+}
+
+// Div divides input1 by input2 and writes back the result into dst slice
+func div(dst, input1, input2 []int8) []int8 {
+	for i, v := range input1 {
+		dst[i] = v / input2[i]
+	}
+	return dst
+}
+
+// makeVector generates a test vector
+func makeVector[T int8 | uint8](count int) []T {
+	arr := make([]T, count)
+	for i := 0; i < count; i++ {
+		arr[i] = T((i % 100) + 1)
+	}
+	return arr
 }

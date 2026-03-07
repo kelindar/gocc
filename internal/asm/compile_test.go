@@ -29,10 +29,14 @@ func TestGenerate(t *testing.T) {
 
 	var fn []Function
 	assert.NoError(t, json.Unmarshal(b, &fn))
+	for i := range fn {
+		fn[i].RelocateConsts()
+	}
 
 	asm, err := Generate(config.AMD64(), fn)
 	assert.NoError(t, err)
 
-	assert.Contains(t, string(asm), "GLOBL LCPI0_0<>(SB), (8+16), $32")
+	assert.NotContains(t, string(asm), "GLOBL LCPI0_0<>(SB), (8+16), $32")
+	assert.Contains(t, string(asm), "WORD $0x00ff")
 	assert.Contains(t, string(asm), "TEXT ·uint8_mul(SB), $0-32")
 }

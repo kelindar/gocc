@@ -50,3 +50,24 @@ func TestParseObjectDump(t *testing.T) {
 		assert.NotEmpty(t, line.Binary)
 	}
 }
+
+func TestParseObjectDumpRelocation(t *testing.T) {
+	fn := []Function{
+		{
+			Name: "foo",
+			Lines: []Line{
+				{
+					Assembly: "vmovdqa 0x0(%rip),%ymm0",
+				},
+			},
+		},
+	}
+
+	dump := `0000000000000000 <foo>:
+   0:	c5 fd 6f 05 00 00 00 00 	vmovdqa 0x0(%rip),%ymm0
+   4:	R_X86_64_PC32 .LCPI0_0-0x4
+`
+	assert.NoError(t, ParseObjectDump(config.AMD64(), dump, fn))
+	assert.Equal(t, ".LCPI0_0-0x4", fn[0].Lines[0].Relocation)
+	assert.Equal(t, []string{"c5", "fd", "6f", "05", "00", "00", "00", "00"}, fn[0].Lines[0].Binary)
+}

@@ -17,7 +17,6 @@ package asm
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/kelindar/gocc/internal/config"
@@ -52,9 +51,18 @@ func (f *Function) String() string {
 
 // Line represents a line of assembly code
 type Line struct {
-	Labels   []string `json:"labels,omitempty"` // Labels for the line
-	Binary   []string `json:"binary"`           // Binary representation of the line
-	Assembly string   `json:"assembly"`         // Assembly representation of the line
+	Labels     []string `json:"labels,omitempty"`     // Labels for the line
+	Binary     []string `json:"binary"`               // Binary representation of the line
+	Assembly   string   `json:"assembly"`             // Assembly representation of the line
+	Relocation string   `json:"relocation,omitempty"` // Optional relocation symbol expression (objdump -r)
+}
+
+// ConstLabel returns the normalized constant-pool label referenced by this line.
+func (line Line) ConstLabel() string {
+	if label := normalizeConstLabel(relocationLabel(line.Relocation)); label != "" {
+		return label
+	}
+	return normalizeConstLabel(assemblyConstLabel(line.Assembly))
 }
 
 // Compile returns the string representation of a line in PLAN9 assembly
@@ -168,65 +176,5 @@ func (p *Param) String() string {
 		return fmt.Sprintf("%s int16", p.Name)
 	default:
 		panic(fmt.Sprintf("gocc: unknown type %s", p.Type))
-	}
-}
-
-// ------------------------------------- Constants -------------------------------------
-
-type Const struct {
-	Label string      `json:"label"` // Label of the constant
-	Lines []ConstLine `json:"lines"` // LInes of the constant
-}
-
-type ConstLine struct {
-	Size  int   `json:"size"`  // Size of the constant
-	Value int64 `json:"value"` // Value of the constant
-}
-
-// Compile returns the string representation of a line in PLAN9 assembly
-func (c *Const) Compile(arch *config.Arch) string {
-	if arch.Name != "amd64" {
-		panic("gocc: only amd64 is supported for constants")
-	}
-
-	var output strings.Builder
-	var totalSize int
-	for _, d := range c.Lines {
-
-		// Write the DATA instruction.
-		instruction := fmt.Sprintf("DATA %s<>+%#04x(SB)/%d, $%#04x\n", c.Label, totalSize, d.Size, d.Value)
-		output.WriteString(instruction)
-		totalSize += d.Size
-	}
-
-	// Write the GLOBL instruction (8=RODATA, 16=NOPTR)
-	output.WriteString(fmt.Sprintf("GLOBL %s<>(SB), (8+16), $%d\n", c.Label, totalSize))
-	return output.String()
-}
-
-// parseConst parses a line in the constant section
-func parseConst(arch *config.Arch, line string) ConstLine {
-	if arch.Name != "amd64" {
-		panic("gocc: only amd64 is supported for constants")
-	}
-
-	sizes := map[string]int{
-		"byte":  1,
-		"short": 2,
-		"long":  4,
-		"int":   4,
-		"quad":  8,
-	}
-
-	match := arch.Const.FindStringSubmatch(line)
-	typeName := match[1]
-	value, err := strconv.ParseInt(match[2], 10, 64)
-	if err != nil {
-		panic(fmt.Sprintf("gocc: invalid constant value in data: %v", err))
-	}
-
-	return ConstLine{
-		Size:  sizes[typeName],
-		Value: value,
 	}
 }

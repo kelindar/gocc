@@ -5,5 +5,282 @@ package simd
 
 import "unsafe"
 
-//go:noescape,nosplit
-func uint8_avx2_mul(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+//go:nosplit
+//go:noescape
+func _uint8_sum(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint8_min(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint8_max(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint8_add(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint8_sub(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint8_mul(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint8_div(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint16_sum(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint16_min(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint16_max(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint16_add(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint16_sub(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint16_mul(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint16_div(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint32_sum(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint32_min(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint32_max(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint32_add(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint32_sub(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint32_mul(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint32_div(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint64_sum(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint64_min(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint64_max(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint64_add(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint64_sub(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint64_mul(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _uint64_div(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int8_sum(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int8_min(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int8_max(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int8_add(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int8_sub(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int8_mul(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int8_div(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int16_sum(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int16_min(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int16_max(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int16_add(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int16_sub(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int16_mul(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int16_div(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int32_sum(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int32_min(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int32_max(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int32_add(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int32_sub(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int32_mul(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int32_div(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int64_sum(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int64_min(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int64_max(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int64_add(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int64_sub(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int64_mul(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _int64_div(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float32_sum(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float32_min(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float32_max(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float32_add(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float32_sub(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float32_mul(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float32_div(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float64_sum(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float64_min(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float64_max(input unsafe.Pointer, result unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float64_add(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float64_sub(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float64_mul(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
+
+//go:nosplit
+//go:noescape
+func _float64_div(input1 unsafe.Pointer, input2 unsafe.Pointer, output unsafe.Pointer, size uint64)
