@@ -75,7 +75,7 @@ func AMD64() *Arch {
 		Symbol:       regexp.MustCompile(`^\w+\s+<\w+>:$`),
 		Data:         regexp.MustCompile(`^\w+:\s+\w+\s+.+$`),
 		Comment:      regexp.MustCompile(`^\s*#.*$`),
-		Const:        regexp.MustCompile(`^\s+\.(byte|short|long|int|quad)\s+(-?\d+).+$`),
+		Const:        regexp.MustCompile(`^\s+\.(byte|short|long|int|quad|zero|fill)\s+.+$`),
 		Registers:    []string{"DI", "SI", "DX", "CX"},
 		FloatRegs:    []string{"X0", "X1", "X2", "X3", "X4", "X5", "X6", "X7"},
 		Float32Op:    "MOVSS",

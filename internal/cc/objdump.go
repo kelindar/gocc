@@ -35,7 +35,7 @@ func (d *Disassembler) Disassemble(assemblyPath, objectPath string) ([]asm.Funct
 	if d.arch.Disassembler != nil {
 		disassembler = d.arch.Disassembler
 	}
-	disassembler = append(disassembler, "-d", objectPath)
+	disassembler = append(disassembler, "-dr", objectPath)
 
 	// Run the disassembler
 	dump, err := runCommand(disassembler[0], disassembler[1:]...)

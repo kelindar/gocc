@@ -53,7 +53,7 @@ func ParseAssembly(arch *config.Arch, path string) ([]Function, error) {
 
 		// Handle constant lines and attach them to the current label
 		case arch.Const.MatchString(line):
-			constant.Lines = append(constant.Lines, parseConst(arch, line))
+			constant.Lines = append(constant.Lines, parseConst(arch, line)...)
 
 		// Skip attirubtes and comment lines
 		case arch.Attribute.MatchString(line):
@@ -118,6 +118,7 @@ func ParseObjectDump(arch *config.Arch, dump string, functions []Function) error
 		functionIdx  int
 		current      *Function
 		lineNumber   int
+		lastLineIdx  = -1
 	)
 
 	for i, line := range strings.Split(dump, "\n") {
@@ -128,7 +129,14 @@ func ParseObjectDump(arch *config.Arch, dump string, functions []Function) error
 			functionName = strings.Split(functionName, ">")[0]
 			current = &functions[functionIdx]
 			lineNumber = 0
+			lastLineIdx = -1
 			functionIdx++
+		case isRelocationLine(line):
+			if current == nil || lastLineIdx < 0 {
+				continue
+			}
+
+			current.Lines[lastLineIdx].Relocation = parseRelocationSymbol(line)
 		case arch.Data.MatchString(line):
 			data := strings.Split(line, ":")[1]
 			data = strings.TrimSpace(data)
@@ -171,8 +179,35 @@ func ParseObjectDump(arch *config.Arch, dump string, functions []Function) error
 			}
 
 			current.Lines[lineNumber].Binary = binary
+			current.Lines[lineNumber].Relocation = ""
+			lastLineIdx = lineNumber
 			lineNumber++
 		}
 	}
+
+	// Relocate constants
+	for i := range functions {
+		functions[i].relocate()
+	}
 	return nil
+}
+
+func isRelocationLine(line string) bool {
+	if line == "" || !strings.Contains(line, ":") {
+		return false
+	}
+
+	data := strings.SplitN(line, ":", 2)
+	fields := strings.Fields(strings.TrimSpace(data[1]))
+	return len(fields) >= 2 && strings.HasPrefix(fields[0], "R_")
+}
+
+func parseRelocationSymbol(line string) string {
+	data := strings.SplitN(line, ":", 2)
+	fields := strings.Fields(strings.TrimSpace(data[1]))
+	if len(fields) < 2 {
+		return ""
+	}
+
+	return fields[1]
 }

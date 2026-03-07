@@ -63,3 +63,22 @@ func TestLineARM(t *testing.T) {
 	assert.Equal(t, "\tWORD $0x910003fd\t// mov x29, sp\n",
 		compiled)
 }
+
+func TestParseConstZero(t *testing.T) {
+	lines := parseConst(config.AMD64(), "\t.zero 4, 128")
+	assert.Equal(t, []ConstLine{
+		{Size: 1, Value: 128},
+		{Size: 1, Value: 128},
+		{Size: 1, Value: 128},
+		{Size: 1, Value: 128},
+	}, lines)
+}
+
+func TestParseConstFill(t *testing.T) {
+	lines := parseConst(config.AMD64(), "\t.fill 3, 2, 0xff")
+	assert.Equal(t, []ConstLine{
+		{Size: 2, Value: 255},
+		{Size: 2, Value: 255},
+		{Size: 2, Value: 255},
+	}, lines)
+}

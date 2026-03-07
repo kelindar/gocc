@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/kelindar/gocc/internal/amd64"
 	"github.com/kelindar/gocc/internal/asm"
 	"github.com/kelindar/gocc/internal/cc"
 	"github.com/kelindar/gocc/internal/config"
@@ -95,6 +96,9 @@ func (t *Local) Translate() error {
 	if err != nil {
 		return err
 	}
+
+	// Apply alignment safety
+	amd64.Rewrite(t.Arch, assembly)
 
 	// Map the machine code to the assembly one
 	for i, v := range assembly {
