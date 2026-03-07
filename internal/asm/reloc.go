@@ -5,9 +5,9 @@ import (
 	"strconv"
 )
 
-// RelocateConsts rewrites RIP-relative LCPI displacements to point to
+// relocate rewrites RIP-relative LCPI displacements to point to
 // constants embedded in the same TEXT symbol and marks those constants inline.
-func (fn *Function) RelocateConsts() {
+func (fn *Function) relocate() {
 	labels := make(map[string]Const, len(fn.Consts))
 	for _, c := range fn.Consts {
 		labels[normalizeConstLabel(c.Label)] = c

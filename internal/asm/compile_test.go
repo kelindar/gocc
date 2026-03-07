@@ -30,7 +30,7 @@ func TestGenerate(t *testing.T) {
 	var fn []Function
 	assert.NoError(t, json.Unmarshal(b, &fn))
 	for i := range fn {
-		fn[i].RelocateConsts()
+		fn[i].relocate()
 	}
 
 	asm, err := Generate(config.AMD64(), fn)

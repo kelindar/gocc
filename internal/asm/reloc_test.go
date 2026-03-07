@@ -32,7 +32,7 @@ func TestPatchConstRelocations(t *testing.T) {
 		},
 	}
 
-	fn.RelocateConsts()
+	fn.relocate()
 	assert.True(t, fn.Consts[0].Inline)
 
 	// code size is 9 bytes, so disp32 points to first inline const at +1
@@ -66,7 +66,7 @@ func TestGenerateInlinesRelocatedConsts(t *testing.T) {
 		},
 	}
 	for i := range fn {
-		fn[i].RelocateConsts()
+		fn[i].relocate()
 	}
 
 	asm, err := Generate(config.AMD64(), fn)
@@ -97,7 +97,7 @@ func TestPatchConstRelocationsFallbackToAssemblySymbol(t *testing.T) {
 		},
 	}
 
-	fn.RelocateConsts()
+	fn.relocate()
 	assert.True(t, fn.Consts[0].Inline)
 	assert.Equal(t, []string{"c4", "e2", "7d", "79", "05", "00", "00", "00", "00"}, fn.Lines[0].Binary)
 }

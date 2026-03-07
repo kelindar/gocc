@@ -185,8 +185,9 @@ func ParseObjectDump(arch *config.Arch, dump string, functions []Function) error
 		}
 	}
 
+	// Relocate constants
 	for i := range functions {
-		functions[i].RelocateConsts()
+		functions[i].relocate()
 	}
 	return nil
 }
