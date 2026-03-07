@@ -5,8 +5,10 @@ package simd
 
 import "unsafe"
 
-//go:noescape,nosplit
+//go:nosplit
+//go:noescape
 func f32_axpy(x unsafe.Pointer, y unsafe.Pointer, size uint64, alpha float32)
 
-//go:noescape,nosplit
+//go:nosplit
+//go:noescape
 func f32_matmul(dst unsafe.Pointer, m unsafe.Pointer, n unsafe.Pointer, dims uint64)
